@@ -1,5 +1,5 @@
 import { prisma } from "./prisma";
-import { todayUTC } from "./sync";
+import { istToday } from "./time";
 
 export type PlayerStats = {
   id: string;
@@ -20,6 +20,22 @@ function inWindow(date: string, start: string | null, end: string | null): boole
   return true;
 }
 
+/** Shift a YYYY-MM-DD date by `delta` days (UTC). */
+function shiftDay(date: string, delta: number): string {
+  const d = new Date(`${date}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + delta);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Inclusive, gap-free list of YYYY-MM-DD days from start to end. */
+function daysBetween(start: string, end: string): string[] {
+  const days: string[] = [];
+  for (let d = new Date(`${start}T00:00:00Z`); d <= new Date(`${end}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + 1)) {
+    days.push(d.toISOString().slice(0, 10));
+  }
+  return days;
+}
+
 /** Everything the Stats tab + leaderboard need, ranked by competition score. */
 export async function getLeaderboard(): Promise<{ contest: ContestInfo; players: PlayerStats[] }> {
   const [contest, players] = await Promise.all([
@@ -28,7 +44,7 @@ export async function getLeaderboard(): Promise<{ contest: ContestInfo; players:
   ]);
   const start = contest?.startDate ?? null;
   const end = contest?.endDate ?? null;
-  const today = todayUTC();
+  const today = istToday();
 
   const stats: PlayerStats[] = players.map((p) => {
     const windowDays = p.daily.filter((d) => inWindow(d.date, start, end));
@@ -60,20 +76,32 @@ export async function getGraphData(): Promise<GraphData> {
     prisma.player.findMany({ include: { daily: true }, orderBy: { createdAt: "asc" } }),
   ]);
   const start = contest?.startDate ?? null;
-  const end = contest?.endDate ?? todayUTC();
   if (!start) return { dates: [], series: [] };
 
-  // Build a continuous date axis from start → end so every day shows (even zero-commit days).
-  const dates: string[] = [];
-  for (let d = new Date(`${start}T00:00:00Z`); d <= new Date(`${end}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + 1)) {
-    dates.push(d.toISOString().slice(0, 10));
-  }
+  // Graphs show a fixed 5-day window: today−2 … today+2.
+  const today = istToday();
+  const displayStart = shiftDay(today, -2);
+  const displayEnd = shiftDay(today, 2);
+  const dates = daysBetween(displayStart, displayEnd);
+
+  // Accumulate cumulative totals from the contest start (so the cumulative line
+  // carries the real running total), but only emit the displayed window slice.
+  const accStart = start < displayStart ? start : displayStart;
+  const accDates = daysBetween(accStart, displayEnd);
 
   const series = players.map((p) => {
     const map = new Map(p.daily.map((d) => [d.date, d.count]));
-    const daily = dates.map((day) => map.get(day) ?? 0);
     let running = 0;
-    const cumulative = daily.map((c) => (running += c));
+    const daily: number[] = [];
+    const cumulative: number[] = [];
+    for (const day of accDates) {
+      const c = map.get(day) ?? 0;
+      running += c;
+      if (day >= displayStart) {
+        daily.push(c);
+        cumulative.push(running);
+      }
+    }
     return { id: p.id, name: p.name, daily, cumulative };
   });
 

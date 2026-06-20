@@ -12,10 +12,11 @@ function decryptToken(payload) {
   return Buffer.concat([d.update(Buffer.from(dataHex, "hex")), d.final()]).toString("utf8");
 }
 
+const IST_OFFSET = "+05:30";
 const prisma = new PrismaClient();
 const contest = await prisma.contest.findUnique({ where: { id: 1 } });
 const players = await prisma.player.findMany();
-const today = new Date().toISOString().slice(0, 10);
+const today = new Date(Date.now() + 5.5 * 3600 * 1000).toISOString().slice(0, 10); // IST
 const start = contest?.startDate ?? today;
 const end = contest?.endDate && contest.endDate < today ? contest.endDate : today;
 
@@ -28,7 +29,7 @@ for (const p of players) {
   const token = decryptToken(p.tokenEncrypted);
   const gql = graphql.defaults({ headers: { authorization: `token ${token}` } });
   const fields = days
-    .map((day, j) => `d${j}: contributionsCollection(from:${JSON.stringify(`${day}T00:00:00Z`)},to:${JSON.stringify(`${day}T23:59:59Z`)}){ totalCommitContributions }`)
+    .map((day, j) => `d${j}: contributionsCollection(from:${JSON.stringify(`${day}T00:00:00${IST_OFFSET}`)},to:${JSON.stringify(`${day}T23:59:59${IST_OFFSET}`)}){ totalCommitContributions }`)
     .join("\n");
   const res = await gql(`query($login:String!){ user(login:$login){ ${fields} } }`, { login: p.githubLogin });
 

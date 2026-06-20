@@ -1,4 +1,5 @@
 import { graphql } from "@octokit/graphql";
+import { istDayStart, istDayEnd } from "./time";
 
 // ── Why this approach ───────────────────────────────────────────────────────
 // We score COMMITS ONLY (not the green-square calendar, which also counts PRs/
@@ -62,9 +63,10 @@ export async function fetchDailyCommits(
     const batch = days.slice(i, i + DAYS_PER_REQUEST);
     const fields = batch
       .map(
+        // IST day boundaries so commits bucket by IST midnight, not UTC.
         (day, j) =>
-          `d${j}: contributionsCollection(from:${JSON.stringify(`${day}T00:00:00Z`)},to:${JSON.stringify(
-            `${day}T23:59:59Z`
+          `d${j}: contributionsCollection(from:${JSON.stringify(istDayStart(day))},to:${JSON.stringify(
+            istDayEnd(day)
           )}){ totalCommitContributions }`
       )
       .join("\n");

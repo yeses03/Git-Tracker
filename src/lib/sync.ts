@@ -1,12 +1,9 @@
 import { prisma } from "./prisma";
 import { decryptToken } from "./crypto";
 import { fetchAccountCreated, fetchDailyCommits, fetchTotalCommits } from "./github";
+import { istToday } from "./time";
 
 const STALE_MS = 5 * 60 * 1000; // on-page-load refresh only re-hits GitHub if older than this
-
-export function todayUTC(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 async function getContest() {
   return prisma.contest.findUnique({ where: { id: 1 } });
@@ -32,7 +29,7 @@ export async function syncPlayer(playerId: string, force = false): Promise<void>
 
   // Daily window: contest start → min(end, today). Skipped if contest dates unset.
   if (contest?.startDate) {
-    const today = todayUTC();
+    const today = istToday();
     const end = contest.endDate && contest.endDate < today ? contest.endDate : today;
     const daily = await fetchDailyCommits(token, player.githubLogin, contest.startDate, end);
     await prisma.$transaction([
