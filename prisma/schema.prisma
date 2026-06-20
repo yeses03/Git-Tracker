@@ -1,0 +1,40 @@
+// Switch `provider` to "postgresql" + a Supabase DATABASE_URL later — that's the only change needed.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Player {
+  id             String        @id @default(cuid())
+  name           String
+  githubLogin    String        @unique
+  tokenEncrypted String // AES-256-GCM ciphertext — never exposed to the client
+  totalCommits   Int           @default(0) // all-time cumulative (computed via year-loop)
+  accountCreated DateTime? // GitHub account createdAt, used to bound the year-loop
+  lastSyncedAt   DateTime?
+  createdAt      DateTime      @default(now())
+  daily          CommitDaily[]
+}
+
+// Source of truth for scores & graphs: one row per player per day.
+model CommitDaily {
+  player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  playerId String
+  date     String // YYYY-MM-DD (calendar day from GitHub contribution calendar)
+  count    Int    @default(0)
+
+  @@id([playerId, date])
+  @@index([date])
+}
+
+// Single-row contest config.
+model Contest {
+  id        Int      @id @default(1)
+  startDate String? // YYYY-MM-DD
+  endDate   String? // YYYY-MM-DD
+  updatedAt DateTime @updatedAt
+}

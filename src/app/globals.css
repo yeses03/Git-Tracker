@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Always reserve the scrollbar gutter so switching tabs never shifts layout. */
+html {
+  scrollbar-gutter: stable;
+  overflow-y: scroll;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -22,5 +28,5 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
