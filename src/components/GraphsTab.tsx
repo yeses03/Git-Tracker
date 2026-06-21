@@ -20,7 +20,7 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineEleme
 // ---- Chart theme — solid colors matching the app palette ----
 const GRID_COLOR = "#30363d";
 const TEXT_COLOR = "#8b949e";
-// player1 = blue, player2 = orange; extra players fall back to the accent set.
+// One GitHub-style accent per player, assigned by index.
 const PALETTE = ["#2f81f7", "#d4a72c", "#2ea043", "#8957e5", "#da3633", "#3fb6c0", "#bc4fc2", "#57606a"];
 
 // Shared options object — identical for both charts (spec §7).

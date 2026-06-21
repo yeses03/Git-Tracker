@@ -22,7 +22,6 @@ html {
   --blue:   #2f81f7;
   --blue-d: #2563c4;
   --green:  #2ea043;
-  --orange: #d4a72c;
   --purple: #8957e5;
   --gold:   #d4a72c;
   --red:    #da3633;
@@ -35,12 +34,10 @@ html {
   --color-muted: var(--muted);
   --color-blue: var(--blue);
   --color-green: var(--green);
-  --color-orange: var(--orange);
   --color-purple: var(--purple);
   --color-gold: var(--gold);
   --color-red: var(--red);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
 body {

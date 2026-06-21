@@ -2,7 +2,7 @@
 // "today", day boundaries, and the per-day windows sent to GitHub — so commits
 // bucket by IST midnight regardless of where the server runs.
 
-export const IST_OFFSET = "+05:30";
+const IST_OFFSET = "+05:30";
 const IST_MS = 5.5 * 60 * 60 * 1000;
 
 /** Current date in IST, as YYYY-MM-DD. */
