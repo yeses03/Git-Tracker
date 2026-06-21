@@ -17,7 +17,7 @@ import type { GraphData, PlayerStats } from "@/lib/scores";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Tooltip, Legend);
 
-// ---- Chart theme (GitHub-dark, per spec) ----
+// ---- Chart theme (GitHub-dark — the palette adopted across the whole app) ----
 const P1_COLOR = "#58a6ff";
 const P2_COLOR = "#f78166";
 const GRID_COLOR = "#30363d";
@@ -49,7 +49,9 @@ export default function GraphsTab({
 
   if (graph.dates.length === 0) {
     return (
-      <p className="text-sm text-zinc-500">Set a contest start date in Setup to see the graphs.</p>
+      <div className="panel flex min-h-40 items-center justify-center p-8 text-center text-sm text-muted">
+        Set a contest start date in Setup to see the graphs.
+      </div>
     );
   }
 
@@ -77,8 +79,7 @@ export default function GraphsTab({
 
   return (
     <div className="space-y-5">
-      {/* .charts container (spec §6) */}
-      <section style={{ background: "#161b22", borderRadius: 12, padding: "10px 14px" }}>
+      <section className="panel p-4">
         <div className="mb-2 flex gap-1.5">
           <Tab active={view === "daily"} onClick={() => setView("daily")}>
             Daily Commits
@@ -98,13 +99,11 @@ export default function GraphsTab({
       </section>
 
       {/* Leaderboard */}
-      <section className="rounded-xl border border-zinc-200 p-5 dark:border-zinc-800">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-zinc-500">
-          Leaderboard
-        </h2>
+      <section className="panel p-5">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">Leaderboard</h2>
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-xs uppercase tracking-wide text-zinc-500">
+            <tr className="text-left text-xs uppercase tracking-wide text-muted">
               <th className="py-1.5">#</th>
               <th>Player</th>
               <th className="text-right">Score</th>
@@ -113,17 +112,17 @@ export default function GraphsTab({
               <th className="text-right">Best day</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800">
+          <tbody className="divide-y divide-border">
             {players.map((p, i) => (
               <tr key={p.id}>
-                <td className="py-2 font-medium">{i + 1}</td>
-                <td>
-                  {p.name} <span className="text-zinc-500">@{p.githubLogin}</span>
+                <td className={`py-2 font-medium ${i === 0 ? "text-accent" : "text-fg"}`}>{i + 1}</td>
+                <td className="text-fg">
+                  {p.name} <span className="text-muted">@{p.githubLogin}</span>
                 </td>
-                <td className="text-right font-semibold tabular-nums">{p.competitionScore}</td>
-                <td className="text-right tabular-nums text-zinc-500">{p.totalCommits}</td>
-                <td className="text-right tabular-nums text-zinc-500">{p.todayCommits}</td>
-                <td className="text-right tabular-nums text-zinc-500">{p.highestDay}</td>
+                <td className="text-right font-semibold tabular-nums text-fg">{p.competitionScore}</td>
+                <td className="text-right tabular-nums text-muted">{p.totalCommits}</td>
+                <td className="text-right tabular-nums text-muted">{p.todayCommits}</td>
+                <td className="text-right tabular-nums text-muted">{p.highestDay}</td>
               </tr>
             ))}
           </tbody>
@@ -146,13 +145,9 @@ function Tab({
   return (
     <button
       onClick={onClick}
-      style={{
-        background: active ? P1_COLOR : "#0d1117",
-        color: active ? "#fff" : "#e6edf3",
-        borderRadius: 8,
-        padding: "7px 16px",
-        fontSize: 13,
-      }}
+      className={`rounded-lg px-4 py-1.5 text-[13px] font-medium transition-colors ${
+        active ? "bg-accent text-bg" : "bg-bg text-fg hover:text-accent"
+      }`}
     >
       {children}
     </button>
