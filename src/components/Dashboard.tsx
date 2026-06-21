@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import type { ContestInfo, PlayerStats, GraphData } from "@/lib/scores";
 import SetupTab from "./SetupTab";
 import StatsTab from "./StatsTab";
@@ -31,28 +31,25 @@ export default function Dashboard({
   const todayTotal = players.reduce((s, p) => s + p.todayCommits, 0);
 
   return (
-    // Single, page-level scroll. One fixed-width frame shared by every tab so
-    // switching tabs never changes the content's width or horizontal position.
+    // One page-level scroll + one fixed-width frame shared by every tab, so
+    // switching tabs never changes the content's width or position.
     <div className="mx-auto w-full max-w-5xl px-4 sm:px-6">
-      <header className="flex flex-wrap items-center justify-between gap-3 py-6">
+      <header className="flex flex-wrap items-center justify-between gap-4 py-7">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-fg">Commit Arena</h1>
-          <p className="text-xs text-muted">
+          <h1 className="text-2xl font-bold tracking-tight text-ink">Commit Arena</h1>
+          <p className="mt-0.5 text-sm text-muted">
             {contest.startDate
               ? `Contest ${contest.startDate} → ${contest.endDate ?? "ongoing"}`
               : "No contest dates set — configure in Setup"}
           </p>
         </div>
-        <nav className="flex gap-1 rounded-lg border border-border bg-panel p-1">
+        <nav className="tabbar">
           {TABS.map((t) => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${
-                tab === t.id
-                  ? "bg-accent text-bg"
-                  : "text-muted hover:text-fg"
-              }`}
+              className={`tab${tab === t.id ? " active" : ""}`}
+              aria-current={tab === t.id ? "page" : undefined}
             >
               {t.label}
             </button>
@@ -60,22 +57,21 @@ export default function Dashboard({
         </nav>
       </header>
 
-      {/* Summary strip — always present, so the top of the page is stable and not blank. */}
-      <section className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <SummaryTile label="Players" value={players.length} />
-        <SummaryTile label="Contest commits" value={totalScore} accent="accent" />
-        <SummaryTile label="Today" value={todayTotal} accent="success" />
-        <SummaryTile
+      {/* Color-coded, boxed summary tiles — always present so the top is stable. */}
+      <section className="mb-7 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <Tile label="Players" value={players.length} color="var(--blue)" />
+        <Tile label="Contest commits" value={totalScore} color="var(--purple)" />
+        <Tile label="Commits today" value={todayTotal} color="var(--green)" />
+        <Tile
           label="Leader"
           value={leader && leader.competitionScore > 0 ? leader.name : "—"}
-          accent="gold"
+          color="var(--gold)"
           isText
         />
       </section>
 
-      {/* Fixed min-height keeps the page tall enough that short tabs (Setup) don't
-          collapse the layout or move the scrollbar relative to taller tabs. */}
-      <main className="min-h-[60vh] pb-10">
+      {/* Fixed min-height so short tabs (Setup) don't collapse the page. */}
+      <main className="min-h-[60vh] pb-12">
         {tab === "setup" && <SetupTab contest={contest} players={players} />}
         {tab === "stats" && <StatsTab players={players} />}
         {tab === "graphs" && <GraphsTab graph={graph} players={players} />}
@@ -84,31 +80,21 @@ export default function Dashboard({
   );
 }
 
-function SummaryTile({
+function Tile({
   label,
   value,
-  accent,
+  color,
   isText,
 }: {
   label: string;
   value: number | string;
-  accent?: "accent" | "success" | "gold";
+  color: string;
   isText?: boolean;
 }) {
-  const accentClass =
-    accent === "accent"
-      ? "text-accent"
-      : accent === "success"
-      ? "text-success"
-      : accent === "gold"
-      ? "text-gold"
-      : "text-fg";
   return (
-    <div className="panel px-4 py-3">
-      <div className="text-[10px] font-medium uppercase tracking-wide text-muted">{label}</div>
-      <div className={`mt-1 font-bold tabular-nums ${isText ? "truncate text-lg" : "text-2xl"} ${accentClass}`}>
-        {value}
-      </div>
+    <div className="tile" style={{ "--tile-accent": color } as CSSProperties}>
+      <div className="tile-k">{label}</div>
+      <div className={`tile-v${isText ? " text truncate" : " tabular-nums"}`}>{value}</div>
     </div>
   );
 }

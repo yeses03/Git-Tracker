@@ -17,13 +17,11 @@ import type { GraphData, PlayerStats } from "@/lib/scores";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Tooltip, Legend);
 
-// ---- Chart theme (GitHub-dark — the palette adopted across the whole app) ----
-const P1_COLOR = "#58a6ff";
-const P2_COLOR = "#f78166";
-const GRID_COLOR = "#30363d";
-const TEXT_COLOR = "#848d97";
-// player1 = blue, player2 = orange; extra players fall back to GitHub accents.
-const PALETTE = [P1_COLOR, P2_COLOR, "#3fb950", "#d29922", "#bc8cff", "#f85149", "#39c5cf", "#db61a2"];
+// ---- Chart theme — matches the app's vivid Apple-dark palette ----
+const GRID_COLOR = "rgba(255,255,255,0.08)";
+const TEXT_COLOR = "#9aa1ad";
+// player1 = blue, player2 = orange; extra players fall back to the accent set.
+const PALETTE = ["#3b9bff", "#ff9f0a", "#32d74b", "#bf5af2", "#ffd426", "#ff5a52", "#40c8e0", "#ff7eb6"];
 
 // Shared options object — identical for both charts (spec §7).
 const common: ChartOptions<"bar" | "line"> = {
@@ -49,7 +47,7 @@ export default function GraphsTab({
 
   if (graph.dates.length === 0) {
     return (
-      <div className="panel flex min-h-40 items-center justify-center p-8 text-center text-sm text-muted">
+      <div className="card flex min-h-44 items-center justify-center p-8 text-center text-sm text-muted">
         Set a contest start date in Setup to see the graphs.
       </div>
     );
@@ -64,6 +62,7 @@ export default function GraphsTab({
       label: s.name,
       data: s.daily,
       backgroundColor: PALETTE[i % PALETTE.length],
+      borderRadius: 6,
     })),
   };
   const lineData = {
@@ -73,20 +72,23 @@ export default function GraphsTab({
       data: s.cumulative,
       borderColor: PALETTE[i % PALETTE.length],
       backgroundColor: PALETTE[i % PALETTE.length],
-      tension: 0.25,
+      tension: 0.3,
     })),
   };
 
   return (
     <div className="space-y-5">
-      <section className="panel p-4">
-        <div className="mb-2 flex gap-1.5">
-          <Tab active={view === "daily"} onClick={() => setView("daily")}>
+      <section className="card p-5">
+        <div className="tabbar mb-4">
+          <button className={`tab${view === "daily" ? " active" : ""}`} onClick={() => setView("daily")}>
             Daily Commits
-          </Tab>
-          <Tab active={view === "cumulative"} onClick={() => setView("cumulative")}>
+          </button>
+          <button
+            className={`tab${view === "cumulative" ? " active" : ""}`}
+            onClick={() => setView("cumulative")}
+          >
             Cumulative
-          </Tab>
+          </button>
         </div>
 
         {/* Both charts always mounted; tabs toggle CSS visibility only (spec §8). */}
@@ -99,12 +101,12 @@ export default function GraphsTab({
       </section>
 
       {/* Leaderboard */}
-      <section className="panel p-5">
+      <section className="card p-6">
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">Leaderboard</h2>
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-xs uppercase tracking-wide text-muted">
-              <th className="py-1.5">#</th>
+              <th className="pb-2">#</th>
               <th>Player</th>
               <th className="text-right">Score</th>
               <th className="text-right">Total</th>
@@ -112,14 +114,24 @@ export default function GraphsTab({
               <th className="text-right">Best day</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
+          <tbody>
             {players.map((p, i) => (
-              <tr key={p.id}>
-                <td className={`py-2 font-medium ${i === 0 ? "text-accent" : "text-fg"}`}>{i + 1}</td>
-                <td className="text-fg">
+              <tr key={p.id} className="border-t" style={{ borderColor: "var(--hairline)" }}>
+                <td
+                  className="py-2.5 font-semibold"
+                  style={{ color: i === 0 ? "var(--gold)" : "var(--ink)" }}
+                >
+                  {i + 1}
+                </td>
+                <td className="text-ink">
                   {p.name} <span className="text-muted">@{p.githubLogin}</span>
                 </td>
-                <td className="text-right font-semibold tabular-nums text-fg">{p.competitionScore}</td>
+                <td
+                  className="text-right font-semibold tabular-nums"
+                  style={{ color: i === 0 ? "var(--gold)" : "var(--blue)" }}
+                >
+                  {p.competitionScore}
+                </td>
                 <td className="text-right tabular-nums text-muted">{p.totalCommits}</td>
                 <td className="text-right tabular-nums text-muted">{p.todayCommits}</td>
                 <td className="text-right tabular-nums text-muted">{p.highestDay}</td>
@@ -129,27 +141,5 @@ export default function GraphsTab({
         </table>
       </section>
     </div>
-  );
-}
-
-// Tab button (spec §6 .tab / .tab.active).
-function Tab({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`rounded-lg px-4 py-1.5 text-[13px] font-medium transition-colors ${
-        active ? "bg-accent text-bg" : "bg-bg text-fg hover:text-accent"
-      }`}
-    >
-      {children}
-    </button>
   );
 }

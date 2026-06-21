@@ -1,13 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type CSSProperties } from "react";
 import type { ContestInfo, PlayerStats } from "@/lib/scores";
 import { addPlayer, deletePlayer, saveContest } from "@/lib/actions";
-
-const inputCls =
-  "mt-1 w-full rounded-md border border-border bg-bg px-3 py-2 text-sm text-fg outline-none focus:border-accent";
-const btnCls =
-  "rounded-md bg-accent px-4 py-2 text-sm font-semibold text-bg transition-opacity hover:opacity-90 disabled:opacity-50";
 
 export default function SetupTab({
   contest,
@@ -37,29 +32,29 @@ export default function SetupTab({
   return (
     <div className="space-y-5">
       {/* Step 1 — Contest (outermost layer) */}
-      <section className="panel p-5">
-        <div className="mb-3 flex items-center gap-2">
+      <section className="card p-6">
+        <div className="mb-4 flex items-center gap-2.5">
           <Step n={1} done={contestReady} />
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Contest dates</h2>
         </div>
         <form action={handleContest} className="flex flex-wrap items-end gap-3">
           <label className="flex-1 text-sm">
-            <span className="text-muted">Start date</span>
-            <input type="date" name="startDate" defaultValue={contest.startDate ?? ""} className={inputCls} />
+            <span className="mb-1 block text-muted">Start date</span>
+            <input type="date" name="startDate" defaultValue={contest.startDate ?? ""} className="field" />
           </label>
           <label className="flex-1 text-sm">
-            <span className="text-muted">End date</span>
-            <input type="date" name="endDate" defaultValue={contest.endDate ?? ""} className={inputCls} />
+            <span className="mb-1 block text-muted">End date</span>
+            <input type="date" name="endDate" defaultValue={contest.endDate ?? ""} className="field" />
           </label>
-          <button disabled={pending} className={btnCls}>
+          <button disabled={pending} className="btn">
             {contestReady ? "Update" : "Start contest"}
           </button>
         </form>
       </section>
 
       {/* Step 2 — Players (locked until a contest exists) */}
-      <section className={`panel p-5 ${contestReady ? "" : "pointer-events-none opacity-50"}`}>
-        <div className="mb-3 flex items-center gap-2">
+      <section className={`card p-6 ${contestReady ? "" : "pointer-events-none opacity-50"}`}>
+        <div className="mb-4 flex items-center gap-2.5">
           <Step n={2} done={players.length > 0} locked={!contestReady} />
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Register players</h2>
         </div>
@@ -70,22 +65,22 @@ export default function SetupTab({
           <>
             <form action={handleAdd} className="flex flex-wrap items-end gap-3">
               <label className="flex-1 text-sm">
-                <span className="text-muted">Display name</span>
-                <input name="name" className={inputCls} />
+                <span className="mb-1 block text-muted">Display name</span>
+                <input name="name" className="field" />
               </label>
               <label className="flex-1 text-sm">
-                <span className="text-muted">GitHub username</span>
-                <input name="githubLogin" className={inputCls} />
+                <span className="mb-1 block text-muted">GitHub username</span>
+                <input name="githubLogin" className="field" />
               </label>
               <label className="flex-1 text-sm">
-                <span className="text-muted">Access token</span>
-                <input name="token" type="password" className={inputCls} />
+                <span className="mb-1 block text-muted">Access token</span>
+                <input name="token" type="password" className="field" />
               </label>
-              <button disabled={pending} className={btnCls}>
+              <button disabled={pending} className="btn">
                 {pending ? "Verifying…" : "Add"}
               </button>
             </form>
-            <p className="mt-2 text-xs text-muted">
+            <p className="mt-3 text-xs text-muted">
               Token is encrypted (AES-256-GCM) before storage and never sent to the browser.
             </p>
           </>
@@ -95,11 +90,20 @@ export default function SetupTab({
       {/* Message banner */}
       {msg && (
         <div
-          className={`rounded-md border px-4 py-2 text-sm ${
+          className="rounded-xl px-4 py-3 text-sm"
+          style={
             msg.kind === "ok"
-              ? "border-success/40 bg-success/10 text-success"
-              : "border-danger/40 bg-danger/10 text-danger"
-          }`}
+              ? ({
+                  background: "rgba(50,215,75,0.12)",
+                  border: "1px solid rgba(50,215,75,0.4)",
+                  color: "var(--green)",
+                } as CSSProperties)
+              : ({
+                  background: "rgba(255,90,82,0.12)",
+                  border: "1px solid rgba(255,90,82,0.4)",
+                  color: "var(--red)",
+                } as CSSProperties)
+          }
         >
           {msg.text}
         </div>
@@ -107,24 +111,28 @@ export default function SetupTab({
 
       {/* Registered players */}
       {contestReady && (
-        <section className="panel p-5">
+        <section className="card p-6">
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">
             Registered players ({players.length})
           </h2>
           {players.length === 0 ? (
             <p className="text-sm text-muted">No players yet.</p>
           ) : (
-            <ul className="divide-y divide-border">
+            <ul className="divide-y" style={{ borderColor: "var(--hairline)" }}>
               {players.map((p) => (
-                <li key={p.id} className="flex items-center justify-between py-2 text-sm">
+                <li
+                  key={p.id}
+                  className="flex items-center justify-between py-3 text-sm"
+                  style={{ borderColor: "var(--hairline)" }}
+                >
                   <span>
-                    <span className="font-medium text-fg">{p.name}</span>{" "}
+                    <span className="font-medium text-ink">{p.name}</span>{" "}
                     <span className="text-muted">@{p.githubLogin}</span>
                   </span>
                   <button
                     onClick={() => start(() => deletePlayer(p.id))}
                     disabled={pending}
-                    className="text-xs text-danger hover:underline disabled:opacity-50"
+                    className="text-xs font-medium text-red hover:underline disabled:opacity-50"
                   >
                     Remove
                   </button>
@@ -139,15 +147,15 @@ export default function SetupTab({
 }
 
 function Step({ n, done, locked }: { n: number; done?: boolean; locked?: boolean }) {
+  const style: CSSProperties = locked
+    ? { background: "var(--surface-2)", color: "var(--muted)" }
+    : done
+    ? { background: "var(--green)", color: "#06210d" }
+    : { background: "linear-gradient(180deg,#4aa6ff,#2d8bff)", color: "#fff" };
   return (
     <span
-      className={`flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-semibold ${
-        locked
-          ? "bg-panel2 text-muted"
-          : done
-          ? "bg-success text-bg"
-          : "bg-accent text-bg"
-      }`}
+      className="flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold"
+      style={style}
     >
       {done && !locked ? "✓" : n}
     </span>
