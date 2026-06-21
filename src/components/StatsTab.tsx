@@ -63,7 +63,12 @@ export default function StatsTab({ players }: { players: PlayerStats[] }) {
             <div className="grid grid-cols-3 gap-2.5 text-center">
               <Chip label="Total" value={p.totalCommits} color="var(--blue)" />
               <Chip label="Today" value={p.todayCommits} color="var(--green)" />
-              <Chip label="Best day" value={p.highestDay} color="var(--purple)" />
+              <Chip
+                label="Best day"
+                value={p.highestDay}
+                color="var(--purple)"
+                sub={p.highestDay > 0 ? fmtDay(p.highestDayDate) : null}
+              />
             </div>
           </div>
         );
@@ -72,16 +77,39 @@ export default function StatsTab({ players }: { players: PlayerStats[] }) {
   );
 }
 
-function Chip({ label, value, color }: { label: string; value: number; color: string }) {
+function Chip({
+  label,
+  value,
+  color,
+  sub,
+}: {
+  label: string;
+  value: number;
+  color: string;
+  sub?: string | null;
+}) {
   return (
     <div
-      className="rounded py-2.5"
+      className="rounded px-1 py-2.5"
       style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}
     >
       <div className="text-lg font-semibold tabular-nums" style={{ color }}>
         {value}
       </div>
       <div className="mt-0.5 text-[10px] uppercase tracking-wide text-muted">{label}</div>
+      {sub !== undefined && (
+        <div className="mt-0.5 text-[10px] tabular-nums text-muted">{sub ?? "—"}</div>
+      )}
     </div>
   );
+}
+
+/** "2026-06-18" → "Jun 18" (parsed as UTC so the day never shifts). */
+function fmtDay(date: string | null): string | null {
+  if (!date) return null;
+  return new Date(`${date}T00:00:00Z`).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
 }

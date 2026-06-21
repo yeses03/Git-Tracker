@@ -9,6 +9,7 @@ export type PlayerStats = {
   competitionScore: number; // commits within contest window
   todayCommits: number;
   highestDay: number; // most commits in a single day during the contest
+  highestDayDate: string | null; // YYYY-MM-DD of that best day (null if none)
   lastSyncedAt: string | null;
 };
 
@@ -48,6 +49,11 @@ export async function getLeaderboard(): Promise<{ contest: ContestInfo; players:
 
   const stats: PlayerStats[] = players.map((p) => {
     const windowDays = p.daily.filter((d) => inWindow(d.date, start, end));
+    // Track both the count and the date of the single best day.
+    const best = windowDays.reduce<{ count: number; date: string | null }>(
+      (m, d) => (d.count > m.count ? { count: d.count, date: d.date } : m),
+      { count: 0, date: null },
+    );
     return {
       id: p.id,
       name: p.name,
@@ -55,7 +61,8 @@ export async function getLeaderboard(): Promise<{ contest: ContestInfo; players:
       totalCommits: p.totalCommits,
       competitionScore: windowDays.reduce((s, d) => s + d.count, 0),
       todayCommits: p.daily.find((d) => d.date === today)?.count ?? 0,
-      highestDay: windowDays.reduce((m, d) => Math.max(m, d.count), 0),
+      highestDay: best.count,
+      highestDayDate: best.date,
       lastSyncedAt: p.lastSyncedAt?.toISOString() ?? null,
     };
   });
