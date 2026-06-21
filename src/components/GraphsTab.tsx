@@ -17,11 +17,11 @@ import type { GraphData, PlayerStats } from "@/lib/scores";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Tooltip, Legend);
 
-// ---- Chart theme — matches the app's vivid Apple-dark palette ----
-const GRID_COLOR = "rgba(255,255,255,0.08)";
-const TEXT_COLOR = "#9aa1ad";
+// ---- Chart theme — solid colors matching the app palette ----
+const GRID_COLOR = "#30363d";
+const TEXT_COLOR = "#8b949e";
 // player1 = blue, player2 = orange; extra players fall back to the accent set.
-const PALETTE = ["#3b9bff", "#ff9f0a", "#32d74b", "#bf5af2", "#ffd426", "#ff5a52", "#40c8e0", "#ff7eb6"];
+const PALETTE = ["#2f81f7", "#d4a72c", "#2ea043", "#8957e5", "#da3633", "#3fb6c0", "#bc4fc2", "#57606a"];
 
 // Shared options object — identical for both charts (spec §7).
 const common: ChartOptions<"bar" | "line"> = {
@@ -116,7 +116,7 @@ export default function GraphsTab({
           </thead>
           <tbody>
             {players.map((p, i) => (
-              <tr key={p.id} className="border-t" style={{ borderColor: "var(--hairline)" }}>
+              <tr key={p.id} className="border-t" style={{ borderColor: "var(--border)" }}>
                 <td
                   className="py-2.5 font-semibold"
                   style={{ color: i === 0 ? "var(--gold)" : "var(--ink)" }}

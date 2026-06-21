@@ -90,19 +90,14 @@ export default function SetupTab({
       {/* Message banner */}
       {msg && (
         <div
-          className="rounded-xl px-4 py-3 text-sm"
+          className="rounded px-4 py-3 text-sm"
           style={
-            msg.kind === "ok"
-              ? ({
-                  background: "rgba(50,215,75,0.12)",
-                  border: "1px solid rgba(50,215,75,0.4)",
-                  color: "var(--green)",
-                } as CSSProperties)
-              : ({
-                  background: "rgba(255,90,82,0.12)",
-                  border: "1px solid rgba(255,90,82,0.4)",
-                  color: "var(--red)",
-                } as CSSProperties)
+            {
+              background: "var(--surface)",
+              border: "1px solid var(--border)",
+              borderLeft: `3px solid ${msg.kind === "ok" ? "var(--green)" : "var(--red)"}`,
+              color: msg.kind === "ok" ? "var(--green)" : "var(--red)",
+            } as CSSProperties
           }
         >
           {msg.text}
@@ -118,12 +113,12 @@ export default function SetupTab({
           {players.length === 0 ? (
             <p className="text-sm text-muted">No players yet.</p>
           ) : (
-            <ul className="divide-y" style={{ borderColor: "var(--hairline)" }}>
+            <ul className="divide-y" style={{ borderColor: "var(--border)" }}>
               {players.map((p) => (
                 <li
                   key={p.id}
                   className="flex items-center justify-between py-3 text-sm"
-                  style={{ borderColor: "var(--hairline)" }}
+                  style={{ borderColor: "var(--border)" }}
                 >
                   <span>
                     <span className="font-medium text-ink">{p.name}</span>{" "}
@@ -150,8 +145,8 @@ function Step({ n, done, locked }: { n: number; done?: boolean; locked?: boolean
   const style: CSSProperties = locked
     ? { background: "var(--surface-2)", color: "var(--muted)" }
     : done
-    ? { background: "var(--green)", color: "#06210d" }
-    : { background: "linear-gradient(180deg,#4aa6ff,#2d8bff)", color: "#fff" };
+    ? { background: "var(--green)", color: "#fff" }
+    : { background: "var(--blue)", color: "#fff" };
   return (
     <span
       className="flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold"

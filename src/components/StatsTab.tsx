@@ -21,14 +21,7 @@ export default function StatsTab({ players }: { players: PlayerStats[] }) {
           <div
             key={p.id}
             className="card p-5"
-            style={
-              isLeader
-                ? ({
-                    borderColor: "rgba(255,212,38,0.55)",
-                    boxShadow: "0 0 0 1px rgba(255,212,38,0.35), 0 18px 50px rgba(255,212,38,0.14)",
-                  } as CSSProperties)
-                : undefined
-            }
+            style={isLeader ? ({ borderColor: "var(--gold)" } as CSSProperties) : undefined}
           >
             <div className="mb-4 flex items-start justify-between gap-2">
               <div className="min-w-0">
@@ -36,8 +29,8 @@ export default function StatsTab({ players }: { players: PlayerStats[] }) {
                   <span className="truncate text-base font-semibold text-ink">{p.name}</span>
                   {isLeader && (
                     <span
-                      className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold tracking-wide"
-                      style={{ background: "rgba(255,212,38,0.16)", color: "var(--gold)" }}
+                      className="shrink-0 rounded px-2 py-0.5 text-[10px] font-bold tracking-wide"
+                      style={{ background: "var(--surface-2)", border: "1px solid var(--gold)", color: "var(--gold)" }}
                     >
                       LEADER
                     </span>
@@ -46,10 +39,10 @@ export default function StatsTab({ players }: { players: PlayerStats[] }) {
                 <div className="truncate text-xs text-muted">@{p.githubLogin}</div>
               </div>
               <span
-                className="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold"
+                className="shrink-0 rounded px-2.5 py-1 text-xs font-semibold"
                 style={{
                   background: "var(--surface-2)",
-                  border: "1px solid var(--hairline)",
+                  border: "1px solid var(--border)",
                   color: isLeader ? "var(--gold)" : "var(--muted)",
                 }}
               >
@@ -60,7 +53,7 @@ export default function StatsTab({ players }: { players: PlayerStats[] }) {
             <div className="mb-4">
               <div
                 className="text-4xl font-bold tabular-nums"
-                style={{ color: isLeader ? "var(--gold)" : "var(--blue)", letterSpacing: "-0.02em" }}
+                style={{ color: isLeader ? "var(--gold)" : "var(--blue)" }}
               >
                 {p.competitionScore}
               </div>
@@ -82,8 +75,8 @@ export default function StatsTab({ players }: { players: PlayerStats[] }) {
 function Chip({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div
-      className="rounded-xl py-2.5"
-      style={{ background: "rgba(255,255,255,0.035)", border: "1px solid var(--hairline)" }}
+      className="rounded py-2.5"
+      style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}
     >
       <div className="text-lg font-semibold tabular-nums" style={{ color }}>
         {value}

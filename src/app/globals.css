@@ -7,32 +7,27 @@ html {
 }
 
 /* ============================================================
-   Apple-inspired dark theme.
-   Deep, soft background; gently elevated cards (no glassmorphism);
-   hairline borders; vivid, tasteful accents. Single dark scheme.
+   Plain, solid dark theme. No gradients, no glow, no glass —
+   flat fills, 1px borders, small radii. Reads like a simple
+   server-rendered app.
    ============================================================ */
 :root {
-  --bg:        #0a0b0f;
-  --bg-tint:   #11131a;
-  --surface:   #15171e;
-  --surface-2: #1c1f28;
-  --hairline:  rgba(255, 255, 255, 0.09);
-  --hairline-strong: rgba(255, 255, 255, 0.16);
-  --ink:       #f3f5f9;
-  --muted:     #9aa1ad;
+  --bg:        #0d1117;
+  --surface:   #161b22;
+  --surface-2: #1c2128;
+  --border:    #30363d;
+  --ink:       #e6edf3;
+  --muted:     #8b949e;
 
-  --blue:   #3b9bff;
-  --green:  #32d74b;
-  --orange: #ff9f0a;
-  --purple: #bf5af2;
-  --gold:   #ffd426;
-  --red:    #ff5a52;
+  --blue:   #2f81f7;
+  --blue-d: #2563c4;
+  --green:  #2ea043;
+  --orange: #d4a72c;
+  --purple: #8957e5;
+  --gold:   #d4a72c;
+  --red:    #da3633;
 
-  --shadow:    0 16px 40px rgba(0, 0, 0, 0.5);
-  --shadow-sm: 0 6px 18px rgba(0, 0, 0, 0.4);
-  --r-lg: 20px;
-  --r-md: 16px;
-  --r-sm: 12px;
+  --r: 6px;
 }
 
 @theme inline {
@@ -49,130 +44,92 @@ html {
 }
 
 body {
-  background:
-    radial-gradient(1100px 600px at 75% -8%, var(--bg-tint), transparent 60%),
-    var(--bg);
-  background-attachment: fixed;
+  background: var(--bg);
   color: var(--ink);
   font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  -webkit-font-smoothing: antialiased;
 }
 
-/* ---- soft elevated surface (replaces the old "glass" panel) ---- */
+/* ---- flat solid surface ---- */
 .card {
-  background: linear-gradient(180deg, var(--surface-2), var(--surface));
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-lg);
-  box-shadow: var(--shadow);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
 }
 
-/* ---- color-coded metric tile ---- */
+/* ---- solid metric tile with a flat colored top bar ---- */
 .tile {
-  position: relative;
-  background: linear-gradient(180deg, var(--surface-2), var(--surface));
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-md);
-  box-shadow: var(--shadow-sm);
-  padding: 16px 18px;
-  overflow: hidden;
-}
-.tile::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 3px;
-  background: var(--tile-accent, var(--blue));
-  opacity: 0.95;
-}
-.tile::after {
-  content: "";
-  position: absolute;
-  top: -40%;
-  right: -20%;
-  width: 120px;
-  height: 120px;
-  border-radius: 999px;
-  background: var(--tile-accent, var(--blue));
-  filter: blur(46px);
-  opacity: 0.16;
-  pointer-events: none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--tile-accent, var(--blue));
+  border-radius: var(--r);
+  padding: 14px 16px;
 }
 .tile-k {
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.01em;
   color: var(--muted);
 }
 .tile-v {
   margin-top: 6px;
-  font-size: 30px;
+  font-size: 28px;
   font-weight: 700;
-  letter-spacing: -0.02em;
   line-height: 1.05;
   color: var(--tile-accent, var(--ink));
 }
 .tile-v.text {
-  font-size: 19px;
+  font-size: 18px;
   color: var(--ink);
 }
 
-/* ---- segmented pill tab bar ---- */
+/* ---- segmented tabs (solid, flat) ---- */
 .tabbar {
   display: inline-flex;
-  gap: 4px;
-  padding: 5px;
-  border-radius: 999px;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--r);
   background: var(--surface);
-  border: 1px solid var(--hairline);
-  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
 }
 .tab {
   border: 0;
   cursor: pointer;
-  border-radius: 999px;
-  padding: 8px 18px;
+  border-radius: 4px;
+  padding: 7px 16px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--muted);
   background: transparent;
-  transition: color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
 }
 .tab:hover { color: var(--ink); }
 .tab.active {
   color: #fff;
-  background: linear-gradient(180deg, #4aa6ff, #2d8bff);
-  box-shadow: 0 6px 18px rgba(59, 155, 255, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  background: var(--blue);
 }
 
-/* ---- form fields + primary button ---- */
+/* ---- form fields + button (solid, flat) ---- */
 .field {
   width: 100%;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--hairline);
-  border-radius: var(--r-sm);
-  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 8px 11px;
   font-size: 14px;
   color: var(--ink);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .field::placeholder { color: var(--muted); }
 .field:focus {
   outline: none;
   border-color: var(--blue);
-  box-shadow: 0 0 0 3px rgba(59, 155, 255, 0.22);
 }
 .btn {
-  border: 0;
+  border: 1px solid var(--blue-d);
   cursor: pointer;
-  border-radius: var(--r-sm);
-  padding: 10px 18px;
+  border-radius: var(--r);
+  padding: 8px 16px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   color: #fff;
-  background: linear-gradient(180deg, #4aa6ff, #2d8bff);
-  box-shadow: 0 6px 18px rgba(59, 155, 255, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  transition: filter 0.15s ease, transform 0.05s ease;
+  background: var(--blue);
 }
-.btn:hover { filter: brightness(1.06); }
-.btn:active { transform: translateY(1px); }
-.btn:disabled { opacity: 0.5; cursor: default; filter: none; }
+.btn:hover { background: var(--blue-d); }
+.btn:disabled { opacity: 0.5; cursor: default; }
