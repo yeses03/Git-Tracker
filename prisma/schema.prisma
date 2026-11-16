@@ -18,6 +18,7 @@ model Player {
   lastSyncedAt   DateTime?
   createdAt      DateTime      @default(now())
   daily          CommitDaily[]
+  repos          RepoCommit[]
 }
 
 // Source of truth for scores & graphs: one row per player per day.
@@ -37,4 +38,16 @@ model Contest {
   startDate String? // YYYY-MM-DD
   endDate   String? // YYYY-MM-DD
   updatedAt DateTime @updatedAt
+}
+
+// Commits per repository within the contest window (GitHub's "contribution activity").
+model RepoCommit {
+  player    Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  playerId  String
+  repo      String // nameWithOwner, e.g. "octocat/hello-world"
+  isPrivate Boolean @default(false)
+  url       String
+  count     Int     @default(0)
+
+  @@id([playerId, repo])
 }

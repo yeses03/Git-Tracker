@@ -15,6 +15,7 @@ import { istDayStart, istDayEnd, daysBetween } from "./time";
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type DailyCount = { date: string; count: number };
+export type RepoCount = { repo: string; isPrivate: boolean; url: string; count: number };
 
 const DAYS_PER_REQUEST = 50; // keep each aliased query well under GraphQL limits
 
@@ -116,4 +117,59 @@ export async function fetchTotalCommits(
     cursor = to;
   }
   return total;
+}
+
+/**
+ * Commits per repository for the inclusive IST day range [startDate, endDate] —
+ * the same data as GitHub's "Contribution activity" list. `contributionsCollection`
+ * allows at most a 1-year window, so longer ranges are fetched in chunks and merged.
+ * Informational only: it can omit repos a token can't enumerate, so the contest
+ * SCORE always comes from fetchDailyCommits, never from this.
+ */
+export async function fetchRepoCommits(
+  token: string,
+  login: string,
+  startDate: string,
+  endDate: string
+): Promise<RepoCount[]> {
+  const gql = client(token);
+  const days = daysBetween(startDate, endDate);
+  const merged = new Map<string, RepoCount>();
+
+  for (let i = 0; i < days.length; i += 360) {
+    const chunk = days.slice(i, i + 360);
+    const res = await gql<{
+      user: {
+        contributionsCollection: {
+          commitContributionsByRepository: {
+            repository: { nameWithOwner: string; isPrivate: boolean; url: string };
+            contributions: { totalCount: number };
+          }[];
+        };
+      } | null;
+    }>(
+      `query($login:String!,$from:DateTime!,$to:DateTime!){
+         user(login:$login){
+           contributionsCollection(from:$from,to:$to){
+             commitContributionsByRepository(maxRepositories:100){
+               repository{ nameWithOwner isPrivate url }
+               contributions{ totalCount }
+             }
+           }
+         }
+       }`,
+      { login, from: istDayStart(chunk[0]), to: istDayEnd(chunk[chunk.length - 1]) }
+    );
+    for (const r of res.user?.contributionsCollection.commitContributionsByRepository ?? []) {
+      const key = r.repository.nameWithOwner;
+      const prev = merged.get(key);
+      merged.set(key, {
+        repo: key,
+        isPrivate: r.repository.isPrivate,
+        url: r.repository.url,
+        count: (prev?.count ?? 0) + r.contributions.totalCount,
+      });
+    }
+  }
+  return [...merged.values()].filter((r) => r.count > 0);
 }

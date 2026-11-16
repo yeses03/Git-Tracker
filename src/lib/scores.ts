@@ -1,6 +1,8 @@
 import { prisma } from "./prisma";
 import { istToday, daysBetween } from "./time";
 
+export type RepoActivity = { name: string; url: string | null; count: number; isPrivate: boolean };
+
 export type PlayerStats = {
   id: string;
   name: string;
@@ -10,6 +12,7 @@ export type PlayerStats = {
   todayCommits: number;
   highestDay: number; // most commits in a single day during the contest
   highestDayDate: string | null; // YYYY-MM-DD of that best day (null if none)
+  repos: RepoActivity[]; // commits per repo in the contest window; private repos are anonymised
   lastSyncedAt: string | null;
 };
 
@@ -28,11 +31,30 @@ function shiftDay(date: string, delta: number): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** Public repos by name; ALL private repos collapse into one anonymous row (no names leak). */
+function summarizeRepos(
+  rows: { repo: string; isPrivate: boolean; url: string; count: number }[],
+  score: number,
+): RepoActivity[] {
+  const pub = rows
+    .filter((r) => !r.isPrivate)
+    .map((r) => ({ name: r.repo, url: r.url, count: r.count, isPrivate: false }));
+  const privCount = rows.filter((r) => r.isPrivate).reduce((s, r) => s + r.count, 0);
+  const out: RepoActivity[] = [...pub];
+  if (privCount > 0) out.push({ name: "Private repositories", url: null, count: privCount, isPrivate: true });
+  // GitHub counts some commits in the total but won't itemise them by repo through the API;
+  // show that gap explicitly so the list always adds up to the score.
+  const gap = score - out.reduce((s, r) => s + r.count, 0);
+  const sorted = out.sort((a, b) => b.count - a.count);
+  if (gap > 0) sorted.push({ name: "Other (not itemised by GitHub)", url: null, count: gap, isPrivate: true });
+  return sorted;
+}
+
 /** Everything the Stats tab + leaderboard need, ranked by competition score. */
 export async function getLeaderboard(): Promise<{ contest: ContestInfo; players: PlayerStats[] }> {
   const [contest, players] = await Promise.all([
     prisma.contest.findUnique({ where: { id: 1 } }),
-    prisma.player.findMany({ omit: { tokenEncrypted: true }, include: { daily: true }, orderBy: { createdAt: "asc" } }),
+    prisma.player.findMany({ omit: { tokenEncrypted: true }, include: { daily: true, repos: true }, orderBy: { createdAt: "asc" } }),
   ]);
   const start = contest?.startDate ?? null;
   const end = contest?.endDate ?? null;
@@ -54,6 +76,7 @@ export async function getLeaderboard(): Promise<{ contest: ContestInfo; players:
       todayCommits: p.daily.find((d) => d.date === today)?.count ?? 0,
       highestDay: best.count,
       highestDayDate: best.date,
+      repos: summarizeRepos(p.repos, windowDays.reduce((s, d) => s + d.count, 0)),
       lastSyncedAt: p.lastSyncedAt?.toISOString() ?? null,
     };
   });

@@ -1,6 +1,6 @@
 import { prisma } from "./prisma";
 import { decryptToken } from "./crypto";
-import { verifyToken, fetchDailyCommits, fetchTotalCommits } from "./github";
+import { verifyToken, fetchDailyCommits, fetchTotalCommits, fetchRepoCommits } from "./github";
 import { istToday } from "./time";
 
 const STALE_MS = 5 * 60 * 1000; // on-page-load refresh only re-hits GitHub if older than this
@@ -46,6 +46,23 @@ export async function syncPlayer(playerId: string, force = false): Promise<void>
           ? [prisma.commitDaily.createMany({ data: daily.map((d) => ({ ...d, playerId })) })]
           : []),
       ]);
+    }
+
+    // Per-repo breakdown is informational: a failure here must not fail the whole sync.
+    if (contest?.startDate) {
+      try {
+        const today = istToday();
+        const end = contest.endDate && contest.endDate < today ? contest.endDate : today;
+        const repos = await fetchRepoCommits(token, player.githubLogin, contest.startDate, end);
+        await prisma.$transaction([
+          prisma.repoCommit.deleteMany({ where: { playerId } }),
+          ...(repos.length
+            ? [prisma.repoCommit.createMany({ data: repos.map((r) => ({ ...r, playerId })) })]
+            : []),
+        ]);
+      } catch (e) {
+        console.error(`[sync] repo breakdown failed for @${player.githubLogin}:`, e);
+      }
     }
 
     await prisma.player.update({

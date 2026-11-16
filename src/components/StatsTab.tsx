@@ -70,6 +70,31 @@ export default function StatsTab({ players }: { players: PlayerStats[] }) {
                 sub={p.highestDay > 0 ? fmtDay(p.highestDayDate) : null}
               />
             </div>
+
+            <div className="mt-4 border-t pt-3" style={{ borderColor: "var(--border)" }}>
+              <div className="eyebrow mb-2">Commits by repository</div>
+              {p.repos.length === 0 ? (
+                <p className="text-xs text-muted">No repository activity in the contest window yet.</p>
+              ) : (
+                <ul className="space-y-1.5">
+                  {p.repos.slice(0, 6).map((r) => (
+                    <li key={r.name} className="flex items-center justify-between gap-3 text-xs">
+                      {r.url ? (
+                        <a href={r.url} target="_blank" rel="noopener noreferrer" className="min-w-0 truncate text-ink-2 hover:text-lavender hover:underline">
+                          {r.name}
+                        </a>
+                      ) : (
+                        <span className="min-w-0 truncate italic text-muted">{r.name}</span>
+                      )}
+                      <span className="shrink-0 tabular-nums text-muted">{r.count}</span>
+                    </li>
+                  ))}
+                  {p.repos.length > 6 && (
+                    <li className="text-xs text-muted">+ {p.repos.length - 6} more</li>
+                  )}
+                </ul>
+              )}
+            </div>
           </div>
         );
       })}
