@@ -36,3 +36,26 @@ export function isValidDay(s: string): boolean {
   const d = new Date(`${s}T00:00:00Z`);
   return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;
 }
+
+const DAY_LABEL = new Intl.DateTimeFormat("en-US", {
+  weekday: "short",
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+  timeZone: "Asia/Kolkata",
+});
+
+/** e.g. "Thu, Oct 10, 2026" — in IST. */
+export function istDateLabel(now: Date = new Date()): string {
+  return DAY_LABEL.format(now);
+}
+
+/** Time-of-day greeting based on the current IST hour. */
+export function istGreeting(now: Date = new Date()): string {
+  const hour = new Date(now.getTime() + IST_MS).getUTCHours();
+  if (hour < 5) return "Good night";
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  if (hour < 21) return "Good evening";
+  return "Good night";
+}
