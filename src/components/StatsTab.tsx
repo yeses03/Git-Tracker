@@ -53,7 +53,7 @@ export default function StatsTab({ players }: { players: PlayerStats[] }) {
             <div className="mb-4">
               <div
                 className="text-4xl font-bold tabular-nums"
-                style={{ color: isLeader ? "var(--gold)" : "var(--blue)" }}
+                style={{ color: isLeader ? "var(--gold)" : "var(--lavender)" }}
               >
                 {p.competitionScore}
               </div>

@@ -18,10 +18,10 @@ import type { GraphData, PlayerStats } from "@/lib/scores";
 ChartJS.register(CategoryScale, LinearScale, BarElement, PointElement, LineElement, Tooltip, Legend);
 
 // ---- Chart theme — solid colors matching the app palette ----
-const GRID_COLOR = "#30363d";
-const TEXT_COLOR = "#8b949e";
+const GRID_COLOR = "#202d43";
+const TEXT_COLOR = "#929db5";
 // One GitHub-style accent per player, assigned by index.
-const PALETTE = ["#2f81f7", "#d4a72c", "#2ea043", "#8957e5", "#da3633", "#3fb6c0", "#bc4fc2", "#57606a"];
+const PALETTE = ["#c6a8ff", "#91a9db", "#8fb89a", "#d9b878", "#d98b8b", "#7fc4c9", "#e0a4c8", "#a9b4cc"];
 
 // Shared options object — identical for both charts (spec §7).
 const common: ChartOptions<"bar" | "line"> = {
@@ -79,7 +79,7 @@ export default function GraphsTab({
   return (
     <div className="space-y-5">
       <section className="card p-5">
-        <div className="tabbar mb-4">
+        <div className="tabbar mb-5">
           <button className={`tab${view === "daily" ? " active" : ""}`} onClick={() => setView("daily")}>
             Daily Commits
           </button>
@@ -102,7 +102,7 @@ export default function GraphsTab({
 
       {/* Leaderboard */}
       <section className="card p-6">
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">Leaderboard</h2>
+        <h2 className="section-title mb-3">Leaderboard</h2>
         <div className="overflow-x-auto">
         <table className="w-full min-w-[480px] text-sm">
           <thead>

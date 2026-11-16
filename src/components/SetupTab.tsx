@@ -52,7 +52,7 @@ export default function SetupTab({
   if (!isAdmin) {
     return (
       <section className="card mx-auto max-w-md p-6">
-        <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-muted">Admin sign-in</h2>
+        <h2 className="mb-1 eyebrow">Admin sign-in</h2>
         <p className="mb-4 text-sm text-muted">
           Only the contest admin can change dates or manage players.
         </p>
@@ -82,7 +82,7 @@ export default function SetupTab({
       <section className="card p-6">
         <div className="mb-4 flex items-center gap-2.5">
           <Step n={1} done={contestReady} />
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Contest dates</h2>
+          <h2 className="eyebrow">Contest dates</h2>
         </div>
         <form action={handleContest} className="flex flex-wrap items-end gap-3">
           <label className="flex-1 text-sm">
@@ -103,7 +103,7 @@ export default function SetupTab({
       <section className={`card p-6 ${contestReady ? "" : "pointer-events-none opacity-50"}`}>
         <div className="mb-4 flex items-center gap-2.5">
           <Step n={2} done={players.length > 0} locked={!contestReady} />
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Register players</h2>
+          <h2 className="eyebrow">Register players</h2>
         </div>
 
         {!contestReady ? (
@@ -154,7 +154,7 @@ export default function SetupTab({
       {/* Registered players */}
       {contestReady && (
         <section className="card p-6">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">
+          <h2 className="mb-3 eyebrow">
             Registered players ({players.length})
           </h2>
           {players.length === 0 ? (
@@ -192,8 +192,8 @@ function Step({ n, done, locked }: { n: number; done?: boolean; locked?: boolean
   const style: CSSProperties = locked
     ? { background: "var(--surface-2)", color: "var(--muted)" }
     : done
-    ? { background: "var(--green)", color: "#fff" }
-    : { background: "var(--blue)", color: "#fff" };
+    ? { background: "var(--green)", color: "#0b1425" }
+    : { background: "var(--lavender)", color: "#1a1330" };
   return (
     <span
       className="flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold"
