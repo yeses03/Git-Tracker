@@ -1,141 +1,138 @@
-# Git Tracker — Commit Arena
+# Commit Arena
 
-A web app where players compete on GitHub commits. Register players with a GitHub
-token, set a contest window, and watch a live leaderboard, stat cards, and charts
-of daily and cumulative commits.
+**Live site: https://git-tracker-tqxb.onrender.com/**
+
+A leaderboard for friendly GitHub commit contests. Pick a start and end date, add
+players, and the site tracks every player's commits: who is leading, who committed
+today, daily and cumulative charts, and which repositories the commits went to.
+
+Anyone with the link can **view** the standings. Only the admin (password-protected)
+can change the contest dates or add and remove players.
 
 ## Features
 
-- **Layered setup** — create a contest (start/end dates) first, then register players.
-- **Two commit metrics**
-  - **Cumulative total** — all commits ever made on the account.
-  - **Competition score** — commits made within the contest window `[start, end]`
-    (both endpoints inclusive). Backfilled from the start date and updated live.
-- **Stats tab** — a card per player: competition score, all-time total, today's
-  commits, and best single day.
-- **Graphs tab** — a Daily/Cumulative toggle (grouped bar chart + cumulative line
-  chart, GitHub-dark theme) plus a leaderboard.
-- **Secure tokens** — GitHub tokens are AES-256-GCM encrypted at rest and never
-  sent to the browser. All GitHub calls run server-side.
+- **Today** — greeting, live moon phase, who has committed today, and standings with
+  progress bars relative to the leader.
+- **Players** — a card per player: contest score, all-time total, today's commits, best
+  single day, and **commits by repository** (GitHub's "contribution activity").
+  Private repositories are shown only as "Private repositories" — names never leak.
+- **Graphs** — daily bar chart and cumulative line chart over a 5-day window, plus a
+  full leaderboard table.
+- **Admin** — set the contest window, register and remove players.
+- **Two metrics** — *contest score* (commits inside the window, both end dates inclusive)
+  and *all-time total* (every commit on the account).
+- **Secure by design** — GitHub tokens are AES-256-GCM encrypted at rest and never reach
+  the browser; the admin area is protected by a signed session cookie.
 
 ## Tech stack
 
-- **Next.js (App Router) + TypeScript** — UI and server actions/route handlers.
-- **Prisma + PostgreSQL** — storage (Supabase, Neon, Vercel Postgres, or local).
-- **Chart.js (react-chartjs-2)** — the two charts.
-- **@octokit/graphql** — GitHub GraphQL client.
-- **Tailwind CSS** — styling.
+| | |
+|---|---|
+| Framework | Next.js 16 (App Router, Server Actions) + TypeScript |
+| Database | PostgreSQL (Supabase) via Prisma |
+| GitHub data | `@octokit/graphql` |
+| Charts | Chart.js (`react-chartjs-2`) |
+| Styling | Tailwind CSS 4 + CSS design tokens ("Moonlit Minimal": solid navy surfaces, lavender accent, no glass effects) |
+| Hosting | Render (blueprint in [`render.yaml`](render.yaml)) |
 
-## How commit data is collected (the important part)
+## How commit data is collected
 
-GitHub's contribution **calendar** (the green squares) counts *all* contributions —
-commits **plus** pull requests, issues, and reviews — so it cannot be used for a
-commits-only contest. Instead we use GitHub's authoritative **`totalCommitContributions`**
-field, which is a true commit-only count for a date range.
+GitHub's contribution **calendar** (the green squares) counts everything — commits plus
+PRs, issues and reviews — so it can't score a commits-only contest. Instead the app uses
+GitHub's **`totalCommitContributions`**, a true commit-only count for a date range
+([`src/lib/github.ts`](src/lib/github.ts)):
 
-- **Daily commits** — `totalCommitContributions` is queried **once per day** over
-  the contest window, batched into a single request via GraphQL field aliases
-  (`d0:`, `d1:`, …). This is commit-only and robust to private / non-enumerable
-  repos. (An earlier approach using `commitContributionsByRepository` was dropped
-  because it silently returns 0 for repos a token can't list.)
-- **All-time cumulative total** — `contributionsCollection` is capped at a 1-year
-  window, so the total loops year-by-year from the account's `createdAt`, summing
-  each year's `totalCommitContributions`.
-
-See [`src/lib/github.ts`](src/lib/github.ts).
-
-### Scoring
-
-- **Competition score** = sum of daily commit counts where `start <= date <= end`
-  (closed interval — start and end days both count). No baseline is subtracted.
-- Days are bucketed in **IST (UTC+05:30)**: each day is queried as
-  `00:00:00+05:30 → 23:59:59+05:30`, over `start → min(end, today)`.
-- See [`src/lib/scores.ts`](src/lib/scores.ts).
+- **Daily commits** — queried once per day across the contest window, batched into
+  aliased GraphQL requests. Days are bucketed in **IST (UTC+05:30)**.
+- **All-time total** — `contributionsCollection` is capped at one year, so the total
+  loops year by year from the account's creation date.
+- **Commits by repository** — `commitContributionsByRepository` over the contest window.
+  This is *informational only*: GitHub's API can't itemise some commits by repo, so the
+  gap is shown as an explicit "Other (not itemised by GitHub)" row. The **score always
+  comes from the daily totals**, never from this list.
+- **Token check** — when a player is added, the token must belong to the username
+  entered, so nobody can register someone else's account.
 
 ### Refresh model
 
-Data refreshes **after the response** on page load, guarded by a 5-minute staleness
-check ([`src/lib/sync.ts`](src/lib/sync.ts)): the page renders instantly from the
-database, then (via `after()`) re-hits GitHub only for players whose data is older
-than 5 minutes. Concurrent visitors don't double-sync (the refresh is atomically
-claimed). Saving new contest dates triggers an immediate re-sync.
-Each player authenticates with their own token, so rate limits never collide.
+The page renders instantly from the database. Then, after the response (`after()`),
+players whose data is older than **5 minutes** are refreshed from GitHub
+([`src/lib/sync.ts`](src/lib/sync.ts)). The refresh is atomically claimed, so concurrent
+visitors never double-sync. Saving new contest dates triggers an immediate re-sync.
 
 ## Project layout
 
 ```
 src/
-  app/            Next.js routes (page.tsx triggers the staleness-guarded sync)
-  components/     Dashboard (3 tabs), SetupTab, StatsTab, GraphsTab
+  app/              Routes: page (Today/Players/Graphs/Admin), /api/health, icon, error pages
+  components/       Dashboard shell, Sidebar, Overview/Stats/Graphs/Setup tabs, Celestial (SVG art)
   lib/
-    github.ts     GitHub GraphQL fetchers (commit-only daily + all-time total)
-    sync.ts       Per-player refresh + staleness guard
-    scores.ts     Leaderboard + graph aggregation
-    crypto.ts     AES-256-GCM token encryption
-    prisma.ts     Prisma client singleton
-    auth.ts       Admin password + signed session cookie
-    actions.ts    Server actions (login, add/delete player, save contest) — all admin-guarded
-prisma/schema.prisma        Player, CommitDaily, Contest models
-scripts/debug-commits.mjs   Diagnostic: prints per-day commit counts from GitHub
+    github.ts       GitHub GraphQL fetchers
+    sync.ts         Per-player refresh + staleness claim
+    scores.ts       Leaderboard + graph aggregation
+    actions.ts      Server actions (login, add/remove player, save contest) — all admin-guarded
+    auth.ts         Admin password + signed session cookie
+    crypto.ts       AES-256-GCM token encryption
+    moon.ts         Moon phase from the date
+    time.ts         IST date helpers
+prisma/schema.prisma   Player, CommitDaily, RepoCommit, Contest
+render.yaml            Render deployment blueprint
+scripts/debug-commits.mjs   Prints per-day commit counts straight from GitHub
 ```
 
-## Design
-
-"Moonlit Minimal": deep midnight navy, solid opaque surfaces, 1px borders, muted lavender
-accents, serif wordmark/greeting (Cormorant Garamond) with Inter for UI. No blur or
-glass effects. Design tokens live in [`globals.css`](src/app/globals.css); the moon phase
-is computed from the date ([`moon.ts`](src/lib/moon.ts)).
-
-## Getting started (local)
+## Run it locally
 
 ```bash
 npm install
-cp .env.example .env     # then fill in DATABASE_URL, DIRECT_URL, ENCRYPTION_KEY, ADMIN_PASSWORD
-docker compose up -d     # local Postgres (or point .env at any Postgres)
-npx prisma db push       # create tables
+cp .env.example .env     # fill in the values (see below)
+docker compose up -d     # local Postgres — or point .env at any Postgres
+npx prisma db push       # create the tables
 npm run dev              # → http://localhost:3000
 ```
 
-Then open the **Admin** tab, sign in with `ADMIN_PASSWORD`, and:
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL` | Postgres connection used at runtime (pooled on serverless/Supabase) |
+| `DIRECT_URL` | Direct connection used by `prisma db push` |
+| `ENCRYPTION_KEY` | 64 hex chars; encrypts stored GitHub tokens. Generate: `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
+| `ADMIN_PASSWORD` | Password for the Admin area |
+| `NEXT_PUBLIC_SITE_URL` | Public site URL (link previews) |
 
-1. Save a contest **start** and **end** date.
-2. Register players: display name, GitHub username, and that user's own
-   [personal access token](https://github.com/settings/tokens) (classic, `repo` +
-   `read:user` so private-repo commits count). The token must belong to the username
-   entered — it is verified on add.
+## Using it
 
-Anyone can view the **Stats** and **Graphs** tabs; only the admin can change anything.
+1. Open **Admin** and sign in with `ADMIN_PASSWORD`.
+2. Save a contest **start** and **end** date.
+3. Add each player: display name, exact GitHub username, and **that person's own**
+   [classic personal access token](https://github.com/settings/tokens) with `repo` and
+   `read:user` (`repo` lets private-repo commits count).
 
-## Deploying to production (Render)
+## Deploying (Render)
 
-1. **Database** — create a Postgres DB (Supabase/Neon). Run `npx prisma db push` once,
-   locally, with `DATABASE_URL`/`DIRECT_URL` pointed at it.
-2. **Render → New → Blueprint**, pick this repo. [`render.yaml`](render.yaml) configures the
-   service (build, start, health check `/api/health`) and prompts for the secrets:
-   `DATABASE_URL` (pooled), `DIRECT_URL` (use the same value as `DATABASE_URL` — Supabase's
-   direct host is IPv6-only), `ENCRYPTION_KEY`, `ADMIN_PASSWORD`, `NEXT_PUBLIC_SITE_URL`.
-3. Deploy. Every push to `main` redeploys automatically.
-4. Open the site, sign in under **Admin**, set the contest and add players. Reusing the same
-   database **and** `ENCRYPTION_KEY` keeps existing players; a new key means re-adding them.
+1. Create a Postgres database (Supabase/Neon) and run `npx prisma db push` once against it.
+2. Render → **New → Blueprint** → pick this repo. [`render.yaml`](render.yaml) sets the
+   build, start and health check (`/api/health`) and asks for the secrets.
+3. Set `DATABASE_URL` (pooled), `DIRECT_URL` (same value as `DATABASE_URL` — Supabase's
+   direct host is IPv6-only), `ENCRYPTION_KEY`, `ADMIN_PASSWORD` and `NEXT_PUBLIC_SITE_URL`.
+4. Every push to `main` redeploys automatically.
 
-Note: the free plan sleeps after ~15 minutes idle (first visit then takes 30–60s).
-The app also runs on Vercel (set the same env vars; syncs are capped at 60s on the free tier).
+Notes: the free plan sleeps after ~15 minutes idle (first visit takes 30–60 s). Reusing
+the same database **and** `ENCRYPTION_KEY` keeps existing players; a new key means
+re-adding them. The app also runs on Vercel, where syncs are capped at 60 s on the free tier.
 
-## Security notes
+## Security
 
-- Server actions are public HTTP endpoints, so **each one re-checks the admin session**;
-  hiding the UI is not relied upon.
-- Admin session = HMAC-signed, expiring (7 days), `httpOnly`, `sameSite=strict`,
-  `secure` cookie. Rotating `ADMIN_PASSWORD` or `ENCRYPTION_KEY` signs everyone out.
-- GitHub tokens are AES-256-GCM encrypted at rest and never sent to the browser.
-  Changing `ENCRYPTION_KEY` makes stored tokens undecryptable.
-- Security headers (HSTS, no-framing, nosniff, referrer policy) are set in `next.config.ts`.
-- Never commit `.env`; `.env.example` is the only env file tracked.
+- Server Actions are public endpoints, so **every one re-checks the admin session**.
+- Admin session: HMAC-signed, expiring (7 days), `httpOnly`, `sameSite=strict`, `secure`.
+  Changing `ADMIN_PASSWORD` or `ENCRYPTION_KEY` signs everyone out.
+- Tokens are encrypted at rest. Changing `ENCRYPTION_KEY` makes stored tokens
+  undecryptable.
+- HSTS, no-framing, nosniff and referrer-policy headers are set in `next.config.ts`.
+- Never commit `.env`; only `.env.example` is tracked.
 
 ## Diagnostics
 
-To see exactly what GitHub reports per day for the registered players:
-
 ```bash
-node --env-file=.env scripts/debug-commits.mjs
+node --env-file=.env scripts/debug-commits.mjs   # per-day commit counts from GitHub
 ```
+
+CI (typecheck, lint, build) runs on every push via GitHub Actions.
