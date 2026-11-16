@@ -79,12 +79,20 @@ prisma/schema.prisma        Player, CommitDaily, Contest models
 scripts/debug-commits.mjs   Diagnostic: prints per-day commit counts from GitHub
 ```
 
+## Design
+
+"Moonlit Minimal": deep midnight navy, solid opaque surfaces, 1px borders, muted lavender
+accents, serif wordmark/greeting (Cormorant Garamond) with Inter for UI. No blur or
+glass effects. Design tokens live in [`globals.css`](src/app/globals.css); the moon phase
+is computed from the date ([`moon.ts`](src/lib/moon.ts)).
+
 ## Getting started (local)
 
 ```bash
 npm install
 cp .env.example .env     # then fill in DATABASE_URL, DIRECT_URL, ENCRYPTION_KEY, ADMIN_PASSWORD
-npx prisma db push       # create tables in your Postgres
+docker compose up -d     # local Postgres (or point .env at any Postgres)
+npx prisma db push       # create tables
 npm run dev              # → http://localhost:3000
 ```
 
@@ -106,7 +114,7 @@ Anyone can view the **Stats** and **Graphs** tabs; only the admin can change any
    (see `.env.example`): `DATABASE_URL` (pooled), `DIRECT_URL` (direct),
    `ENCRYPTION_KEY` (**new** 64-hex key), `ADMIN_PASSWORD` (long & random),
    `NEXT_PUBLIC_SITE_URL` (your domain).
-3. Deploy. `npm run build` runs `prisma generate` automatically.
+3. Deploy. Uptime checks can poll `/api/health`. `npm run build` runs `prisma generate` automatically.
 4. Open the site, sign in under **Admin**, set the contest, and re-add players
    (tokens are encrypted with the key, so they don't carry over from a different one).
 
