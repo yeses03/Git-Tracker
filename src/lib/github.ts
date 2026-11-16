@@ -1,5 +1,5 @@
 import { graphql } from "@octokit/graphql";
-import { istDayStart, istDayEnd } from "./time";
+import { istDayStart, istDayEnd, daysBetween } from "./time";
 
 // ── Why this approach ───────────────────────────────────────────────────────
 // We score COMMITS ONLY (not the green-square calendar, which also counts PRs/
@@ -22,26 +22,26 @@ function client(token: string) {
   return graphql.defaults({ headers: { authorization: `token ${token}` } });
 }
 
-function daysBetween(startDate: string, endDate: string): string[] {
-  const days: string[] = [];
-  for (
-    let d = new Date(`${startDate}T00:00:00Z`);
-    d <= new Date(`${endDate}T00:00:00Z`);
-    d.setUTCDate(d.getUTCDate() + 1)
-  ) {
-    days.push(d.toISOString().slice(0, 10));
+/**
+ * Verifies the token belongs to `login` and returns the canonical login (GitHub's
+ * casing) plus the account creation date, which bounds the all-time year-loop.
+ * Requiring the token's owner to match stops someone registering another
+ * person's username with their own token.
+ */
+export async function verifyToken(
+  token: string,
+  login: string
+): Promise<{ login: string; createdAt: string }> {
+  let res: { viewer: { login: string; createdAt: string } };
+  try {
+    res = await client(token)<typeof res>(`query{ viewer{ login createdAt } }`);
+  } catch {
+    throw new Error("GitHub rejected this token. Check that it is valid and not expired.");
   }
-  return days;
-}
-
-/** GitHub account creation date — bounds the all-time year-loop. */
-export async function fetchAccountCreated(token: string, login: string): Promise<string> {
-  const res = await client(token)<{ user: { createdAt: string } | null }>(
-    `query($login:String!){ user(login:$login){ createdAt } }`,
-    { login }
-  );
-  if (!res.user) throw new Error(`GitHub user "${login}" not found, or token lacks access.`);
-  return res.user.createdAt;
+  if (res.viewer.login.toLowerCase() !== login.toLowerCase()) {
+    throw new Error(`This token belongs to "${res.viewer.login}", not "${login}".`);
+  }
+  return res.viewer;
 }
 
 /**

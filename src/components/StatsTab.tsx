@@ -5,7 +5,7 @@ export default function StatsTab({ players }: { players: PlayerStats[] }) {
   if (players.length === 0) {
     return (
       <div className="card flex min-h-44 items-center justify-center p-8 text-center text-sm text-muted">
-        No players registered yet — add some in Setup.
+        No players registered yet.
       </div>
     );
   }

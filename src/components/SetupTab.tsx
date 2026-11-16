@@ -2,14 +2,16 @@
 
 import { useState, useTransition, type CSSProperties } from "react";
 import type { ContestInfo, PlayerStats } from "@/lib/scores";
-import { addPlayer, deletePlayer, saveContest } from "@/lib/actions";
+import { addPlayer, deletePlayer, saveContest, login, logout } from "@/lib/actions";
 
 export default function SetupTab({
   contest,
   players,
+  isAdmin,
 }: {
   contest: ContestInfo;
   players: PlayerStats[];
+  isAdmin: boolean;
 }) {
   const [msg, setMsg] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
   const [pending, start] = useTransition();
@@ -18,19 +20,64 @@ export default function SetupTab({
   function handleAdd(form: FormData) {
     start(async () => {
       const res = await addPlayer(form);
-      setMsg(res.ok ? { kind: "ok", text: "Player added." } : { kind: "err", text: res.error! });
+      setMsg(
+        !res.ok
+          ? { kind: "err", text: res.error ?? "Something went wrong." }
+          : { kind: "ok", text: res.error ?? "Player added." }, // ok + error = added with a warning
+      );
+    });
+  }
+
+  function handleLogin(form: FormData) {
+    start(async () => {
+      const res = await login(form);
+      setMsg(res.ok ? null : { kind: "err", text: res.error ?? "Sign-in failed." });
+    });
+  }
+
+  function handleRemove(id: string) {
+    start(async () => {
+      const res = await deletePlayer(id);
+      if (!res.ok) setMsg({ kind: "err", text: res.error ?? "Failed to remove player." });
     });
   }
 
   function handleContest(form: FormData) {
     start(async () => {
       const res = await saveContest(form);
-      setMsg(res.ok ? { kind: "ok", text: "Contest saved." } : { kind: "err", text: res.error! });
+      setMsg(res.ok ? { kind: "ok", text: "Contest saved." } : { kind: "err", text: res.error ?? "Something went wrong." });
     });
+  }
+
+  if (!isAdmin) {
+    return (
+      <section className="card mx-auto max-w-md p-6">
+        <h2 className="mb-1 text-sm font-semibold uppercase tracking-wide text-muted">Admin sign-in</h2>
+        <p className="mb-4 text-sm text-muted">
+          Only the contest admin can change dates or manage players.
+        </p>
+        <form action={handleLogin} className="flex flex-wrap items-end gap-3">
+          <label className="flex-1 text-sm">
+            <span className="mb-1 block text-muted">Password</span>
+            <input type="password" name="password" required autoComplete="current-password" className="field" />
+          </label>
+          <button disabled={pending} className="btn">
+            {pending ? "Checking…" : "Sign in"}
+          </button>
+        </form>
+        {msg && <p className="mt-3 text-sm text-red">{msg.text}</p>}
+      </section>
+    );
   }
 
   return (
     <div className="space-y-5">
+      <div className="flex justify-end">
+        <button onClick={() => start(() => logout())} disabled={pending} className="text-xs text-muted hover:underline">
+          Sign out
+        </button>
+      </div>
+
       {/* Step 1 — Contest (outermost layer) */}
       <section className="card p-6">
         <div className="mb-4 flex items-center gap-2.5">
@@ -40,7 +87,7 @@ export default function SetupTab({
         <form action={handleContest} className="flex flex-wrap items-end gap-3">
           <label className="flex-1 text-sm">
             <span className="mb-1 block text-muted">Start date</span>
-            <input type="date" name="startDate" defaultValue={contest.startDate ?? ""} className="field" />
+            <input type="date" name="startDate" required defaultValue={contest.startDate ?? ""} className="field" />
           </label>
           <label className="flex-1 text-sm">
             <span className="mb-1 block text-muted">End date</span>
@@ -66,15 +113,15 @@ export default function SetupTab({
             <form action={handleAdd} className="flex flex-wrap items-end gap-3">
               <label className="flex-1 text-sm">
                 <span className="mb-1 block text-muted">Display name</span>
-                <input name="name" className="field" />
+                <input name="name" required maxLength={60} className="field" />
               </label>
               <label className="flex-1 text-sm">
                 <span className="mb-1 block text-muted">GitHub username</span>
-                <input name="githubLogin" className="field" />
+                <input name="githubLogin" required maxLength={40} autoCapitalize="none" autoCorrect="off" className="field" />
               </label>
               <label className="flex-1 text-sm">
                 <span className="mb-1 block text-muted">Access token</span>
-                <input name="token" type="password" className="field" />
+                <input name="token" type="password" required autoComplete="off" className="field" />
               </label>
               <button disabled={pending} className="btn">
                 {pending ? "Verifying…" : "Add"}
@@ -125,7 +172,7 @@ export default function SetupTab({
                     <span className="text-muted">@{p.githubLogin}</span>
                   </span>
                   <button
-                    onClick={() => start(() => deletePlayer(p.id))}
+                    onClick={() => handleRemove(p.id)}
                     disabled={pending}
                     className="text-xs font-medium text-red hover:underline disabled:opacity-50"
                   >

@@ -21,8 +21,7 @@ of daily and cumulative commits.
 ## Tech stack
 
 - **Next.js (App Router) + TypeScript** — UI and server actions/route handlers.
-- **Prisma + SQLite** — storage. Switching to Supabase/Postgres is a one-line
-  `datasource` change in `prisma/schema.prisma`.
+- **Prisma + PostgreSQL** — storage (Supabase, Neon, Vercel Postgres, or local).
 - **Chart.js (react-chartjs-2)** — the two charts.
 - **@octokit/graphql** — GitHub GraphQL client.
 - **Tailwind CSS** — styling.
@@ -49,15 +48,17 @@ See [`src/lib/github.ts`](src/lib/github.ts).
 
 - **Competition score** = sum of daily commit counts where `start <= date <= end`
   (closed interval — start and end days both count). No baseline is subtracted.
-- The fetch window spans `start 00:00:00Z → min(end, today) 23:59:59Z`, so the end
-  day fully tallies once it arrives.
+- Days are bucketed in **IST (UTC+05:30)**: each day is queried as
+  `00:00:00+05:30 → 23:59:59+05:30`, over `start → min(end, today)`.
 - See [`src/lib/scores.ts`](src/lib/scores.ts).
 
 ### Refresh model
 
-Data refreshes **on page load**, guarded by a 5-minute staleness check
-([`src/lib/sync.ts`](src/lib/sync.ts)): opening the dashboard only re-hits GitHub
-for players whose data is older than 5 minutes; otherwise cached data is served.
+Data refreshes **after the response** on page load, guarded by a 5-minute staleness
+check ([`src/lib/sync.ts`](src/lib/sync.ts)): the page renders instantly from the
+database, then (via `after()`) re-hits GitHub only for players whose data is older
+than 5 minutes. Concurrent visitors don't double-sync (the refresh is atomically
+claimed). Saving new contest dates triggers an immediate re-sync.
 Each player authenticates with their own token, so rate limits never collide.
 
 ## Project layout
@@ -72,35 +73,53 @@ src/
     scores.ts     Leaderboard + graph aggregation
     crypto.ts     AES-256-GCM token encryption
     prisma.ts     Prisma client singleton
-    actions.ts    Server actions (add/delete player, save contest)
+    auth.ts       Admin password + signed session cookie
+    actions.ts    Server actions (login, add/delete player, save contest) — all admin-guarded
 prisma/schema.prisma        Player, CommitDaily, Contest models
 scripts/debug-commits.mjs   Diagnostic: prints per-day commit counts from GitHub
 ```
 
-## Getting started
+## Getting started (local)
 
 ```bash
-# 1. Install
 npm install
-
-# 2. Configure environment
-cp .env.example .env
-# then set ENCRYPTION_KEY (see the comment in .env.example for how to generate one)
-
-# 3. Create the database
-npx prisma db push
-
-# 4. Run
-npm run dev   # → http://localhost:3000
+cp .env.example .env     # then fill in DATABASE_URL, DIRECT_URL, ENCRYPTION_KEY, ADMIN_PASSWORD
+npx prisma db push       # create tables in your Postgres
+npm run dev              # → http://localhost:3000
 ```
 
-Then in the app:
+Then open the **Admin** tab, sign in with `ADMIN_PASSWORD`, and:
 
-1. Open the **Setup** tab and save a contest **start** and **end** date.
-2. Register players: display name, GitHub username, and a
-   [personal access token](https://github.com/settings/tokens). A classic token
-   with `repo` + `read:user` scope is recommended so private-repo commits are counted.
-3. View the **Stats** and **Graphs** tabs.
+1. Save a contest **start** and **end** date.
+2. Register players: display name, GitHub username, and that user's own
+   [personal access token](https://github.com/settings/tokens) (classic, `repo` +
+   `read:user` so private-repo commits count). The token must belong to the username
+   entered — it is verified on add.
+
+Anyone can view the **Stats** and **Graphs** tabs; only the admin can change anything.
+
+## Deploying to production (Vercel)
+
+1. **Database** — create a Postgres DB (Supabase/Neon/Vercel Postgres). Run
+   `npx prisma db push` once, locally, with `DATABASE_URL`/`DIRECT_URL` pointed at it.
+2. **Import the repo** in Vercel and set these environment variables
+   (see `.env.example`): `DATABASE_URL` (pooled), `DIRECT_URL` (direct),
+   `ENCRYPTION_KEY` (**new** 64-hex key), `ADMIN_PASSWORD` (long & random),
+   `NEXT_PUBLIC_SITE_URL` (your domain).
+3. Deploy. `npm run build` runs `prisma generate` automatically.
+4. Open the site, sign in under **Admin**, set the contest, and re-add players
+   (tokens are encrypted with the key, so they don't carry over from a different one).
+
+## Security notes
+
+- Server actions are public HTTP endpoints, so **each one re-checks the admin session**;
+  hiding the UI is not relied upon.
+- Admin session = HMAC-signed, expiring (7 days), `httpOnly`, `sameSite=strict`,
+  `secure` cookie. Rotating `ADMIN_PASSWORD` or `ENCRYPTION_KEY` signs everyone out.
+- GitHub tokens are AES-256-GCM encrypted at rest and never sent to the browser.
+  Changing `ENCRYPTION_KEY` makes stored tokens undecryptable.
+- Security headers (HSTS, no-framing, nosniff, referrer policy) are set in `next.config.ts`.
+- Never commit `.env`; `.env.example` is the only env file tracked.
 
 ## Diagnostics
 
@@ -109,17 +128,3 @@ To see exactly what GitHub reports per day for the registered players:
 ```bash
 node --env-file=.env scripts/debug-commits.mjs
 ```
-
-## Security notes
-
-- `.env` (holds `ENCRYPTION_KEY`) and `prisma/dev.db` (holds encrypted tokens) are
-  gitignored — never commit them.
-- Changing `ENCRYPTION_KEY` makes previously stored tokens undecryptable; players
-  would need to be re-added.
-- The app has no authentication — it is intended for trusted/internal use.
-
-## Switching to Supabase / Postgres
-
-1. In `prisma/schema.prisma`, change `provider = "sqlite"` to `provider = "postgresql"`.
-2. Set `DATABASE_URL` to your Postgres/Supabase connection string.
-3. Run `npx prisma db push`.

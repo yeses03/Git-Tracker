@@ -9,7 +9,7 @@ import GraphsTab from "./GraphsTab";
 type Tab = "setup" | "stats" | "graphs";
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: "setup", label: "Setup" },
+  { id: "setup", label: "Admin" },
   { id: "stats", label: "Stats" },
   { id: "graphs", label: "Graphs" },
 ];
@@ -18,12 +18,14 @@ export default function Dashboard({
   contest,
   players,
   graph,
+  isAdmin,
 }: {
   contest: ContestInfo;
   players: PlayerStats[];
   graph: GraphData;
+  isAdmin: boolean;
 }) {
-  const [tab, setTab] = useState<Tab>(contest.startDate ? "stats" : "setup");
+  const [tab, setTab] = useState<Tab>(contest.startDate || !isAdmin ? "stats" : "setup");
 
   // Summary figures (players already arrive sorted by competition score).
   const leader = players[0];
@@ -40,7 +42,7 @@ export default function Dashboard({
           <p className="mt-0.5 text-sm text-muted">
             {contest.startDate
               ? `Contest ${contest.startDate} → ${contest.endDate ?? "ongoing"}`
-              : "No contest dates set — configure in Setup"}
+              : "No contest has been set up yet"}
           </p>
         </div>
         <nav className="tabbar">
@@ -72,7 +74,7 @@ export default function Dashboard({
 
       {/* Fixed min-height so short tabs (Setup) don't collapse the page. */}
       <main className="min-h-[60vh] pb-12">
-        {tab === "setup" && <SetupTab contest={contest} players={players} />}
+        {tab === "setup" && <SetupTab contest={contest} players={players} isAdmin={isAdmin} />}
         {tab === "stats" && <StatsTab players={players} />}
         {tab === "graphs" && <GraphsTab graph={graph} players={players} />}
       </main>

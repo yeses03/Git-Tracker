@@ -48,7 +48,7 @@ export default function GraphsTab({
   if (graph.dates.length === 0) {
     return (
       <div className="card flex min-h-44 items-center justify-center p-8 text-center text-sm text-muted">
-        Set a contest start date in Setup to see the graphs.
+        Graphs appear once a contest start date is set.
       </div>
     );
   }
@@ -103,7 +103,8 @@ export default function GraphsTab({
       {/* Leaderboard */}
       <section className="card p-6">
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">Leaderboard</h2>
-        <table className="w-full text-sm">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[480px] text-sm">
           <thead>
             <tr className="text-left text-xs uppercase tracking-wide text-muted">
               <th className="pb-2">#</th>
@@ -139,6 +140,7 @@ export default function GraphsTab({
             ))}
           </tbody>
         </table>
+        </div>
       </section>
     </div>
   );

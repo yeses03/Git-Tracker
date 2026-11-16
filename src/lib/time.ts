@@ -19,3 +19,20 @@ export function istDayStart(date: string): string {
 export function istDayEnd(date: string): string {
   return `${date}T23:59:59${IST_OFFSET}`;
 }
+
+/** Inclusive, gap-free list of YYYY-MM-DD days from start to end. */
+export function daysBetween(start: string, end: string): string[] {
+  const days: string[] = [];
+  const last = new Date(`${end}T00:00:00Z`);
+  for (let d = new Date(`${start}T00:00:00Z`); d <= last; d.setUTCDate(d.getUTCDate() + 1)) {
+    days.push(d.toISOString().slice(0, 10));
+  }
+  return days;
+}
+
+/** True for a real calendar date in YYYY-MM-DD form. */
+export function isValidDay(s: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const d = new Date(`${s}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;
+}

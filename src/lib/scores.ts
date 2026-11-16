@@ -1,5 +1,5 @@
 import { prisma } from "./prisma";
-import { istToday } from "./time";
+import { istToday, daysBetween } from "./time";
 
 export type PlayerStats = {
   id: string;
@@ -28,20 +28,11 @@ function shiftDay(date: string, delta: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-/** Inclusive, gap-free list of YYYY-MM-DD days from start to end. */
-function daysBetween(start: string, end: string): string[] {
-  const days: string[] = [];
-  for (let d = new Date(`${start}T00:00:00Z`); d <= new Date(`${end}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + 1)) {
-    days.push(d.toISOString().slice(0, 10));
-  }
-  return days;
-}
-
 /** Everything the Stats tab + leaderboard need, ranked by competition score. */
 export async function getLeaderboard(): Promise<{ contest: ContestInfo; players: PlayerStats[] }> {
   const [contest, players] = await Promise.all([
     prisma.contest.findUnique({ where: { id: 1 } }),
-    prisma.player.findMany({ include: { daily: true }, orderBy: { createdAt: "asc" } }),
+    prisma.player.findMany({ omit: { tokenEncrypted: true }, include: { daily: true }, orderBy: { createdAt: "asc" } }),
   ]);
   const start = contest?.startDate ?? null;
   const end = contest?.endDate ?? null;
@@ -80,7 +71,7 @@ export type GraphData = {
 export async function getGraphData(): Promise<GraphData> {
   const [contest, players] = await Promise.all([
     prisma.contest.findUnique({ where: { id: 1 } }),
-    prisma.player.findMany({ include: { daily: true }, orderBy: { createdAt: "asc" } }),
+    prisma.player.findMany({ omit: { tokenEncrypted: true }, include: { daily: true }, orderBy: { createdAt: "asc" } }),
   ]);
   const start = contest?.startDate ?? null;
   if (!start) return { dates: [], series: [] };

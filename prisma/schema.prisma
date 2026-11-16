@@ -1,11 +1,11 @@
-// Switch `provider` to "postgresql" + a Supabase DATABASE_URL later — that's the only change needed.
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // pooled connection (used at runtime)
+  directUrl = env("DIRECT_URL") // direct connection (used by `prisma db push` / migrate)
 }
 
 model Player {
