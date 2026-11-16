@@ -1,109 +1,134 @@
 @import "tailwindcss";
 
-/* Always reserve the scrollbar gutter so switching tabs never shifts layout. */
-html {
-  scrollbar-gutter: stable;
-  overflow-y: scroll;
-}
-
 /* ============================================================
-   Plain, solid dark theme. No gradients, no glow, no glass —
-   flat fills, 1px borders, small radii. Reads like a simple
-   server-rendered app.
+   Moonlit Minimal — deep midnight navy, soft moonlight, muted
+   lavender accents. Solid opaque surfaces, 1px borders, small
+   radii. No blur, no glass, no glow.
    ============================================================ */
 :root {
-  --bg:        #0d1117;
-  --surface:   #161b22;
-  --surface-2: #1c2128;
-  --border:    #30363d;
-  --ink:       #e6edf3;
-  --muted:     #8b949e;
+  --bg:        #080f1c; /* app background */
+  --sidebar:   #0b1425;
+  --surface:   #101a2c; /* primary card */
+  --surface-2: #141f33; /* secondary surface */
+  --hover:     #19263d;
+  --border:    #202d43;
+  --ink:       #e7eaf4;
+  --ink-2:     #929db5;
+  --muted:     #68758f;
 
-  --blue:   #2f81f7;
-  --blue-d: #2563c4;
-  --green:  #2ea043;
-  --purple: #8957e5;
-  --gold:   #d4a72c;
-  --red:    #da3633;
+  --lavender:   #c6a8ff;
+  --lavender-h: #d5c1ff;
+  --lavender-d: #9d86cf; /* progress fills */
+  --blue:   #91a9db;
+  --green:  #8fb89a; /* muted sage */
+  --purple: #b49be8;
+  --gold:   #d9b878;
+  --red:    #d98b8b; /* dusty red */
 
-  --r: 6px;
+  --r: 8px;
+  --sidebar-w: 248px;
 }
 
 @theme inline {
   --color-ink: var(--ink);
   --color-muted: var(--muted);
+  --color-ink-2: var(--ink-2);
+  --color-lavender: var(--lavender);
   --color-blue: var(--blue);
   --color-green: var(--green);
   --color-purple: var(--purple);
   --color-gold: var(--gold);
   --color-red: var(--red);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-serif);
+}
+
+html {
+  scrollbar-gutter: stable;
+  background: var(--bg);
 }
 
 body {
   background: var(--bg);
   color: var(--ink);
-  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-/* ---- flat solid surface ---- */
+.serif { font-family: var(--font-serif), Georgia, serif; }
+
+:focus-visible {
+  outline: 2px solid var(--lavender);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+
+/* ---- surfaces ---- */
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r);
+  transition: border-color 0.15s, background-color 0.15s;
 }
-
-/* ---- solid metric tile with a flat colored top bar ---- */
-.tile {
-  background: var(--surface);
+.card.interactive:hover { background: var(--surface-2); border-color: var(--hover); }
+.panel {
+  background: var(--surface-2);
   border: 1px solid var(--border);
-  border-top: 3px solid var(--tile-accent, var(--blue));
   border-radius: var(--r);
-  padding: 14px 16px;
 }
-.tile-k {
-  font-size: 12px;
+.section-title { font-size: 18px; font-weight: 600; color: var(--ink); }
+.eyebrow {
+  font-size: 11px;
   font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--muted);
 }
-.tile-v {
-  margin-top: 6px;
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1.05;
-  color: var(--tile-accent, var(--ink));
+
+/* ---- sidebar ---- */
+.nav-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid transparent;
+  border-radius: var(--r);
+  padding: 9px 12px;
+  font-size: 14px;
+  color: var(--ink-2);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s, color 0.15s;
 }
-.tile-v.text {
-  font-size: 18px;
+.nav-item:hover { background: var(--surface); color: var(--ink); }
+.nav-item.active {
+  background: var(--surface-2);
+  border-color: var(--border);
   color: var(--ink);
 }
+.nav-item.active svg { color: var(--lavender); }
 
-/* ---- segmented tabs (solid, flat) ---- */
-.tabbar {
-  display: inline-flex;
-  gap: 2px;
-  padding: 3px;
-  border-radius: var(--r);
-  background: var(--surface);
-  border: 1px solid var(--border);
-}
+/* ---- segmented tabs ---- */
+.tabbar { display: inline-flex; gap: 20px; border-bottom: 1px solid var(--border); }
 .tab {
   border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
   cursor: pointer;
-  border-radius: 4px;
-  padding: 7px 16px;
+  padding: 8px 2px;
   font-size: 14px;
   font-weight: 500;
   color: var(--muted);
   background: transparent;
+  transition: color 0.15s, border-color 0.15s;
 }
 .tab:hover { color: var(--ink); }
-.tab.active {
-  color: #fff;
-  background: var(--blue);
-}
+.tab.active { color: var(--ink); border-bottom-color: var(--lavender); }
 
-/* ---- form fields + button (solid, flat) ---- */
+/* ---- form fields + buttons ---- */
 .field {
   width: 100%;
   background: var(--bg);
@@ -112,21 +137,53 @@ body {
   padding: 8px 11px;
   font-size: 14px;
   color: var(--ink);
+  transition: border-color 0.15s;
 }
 .field::placeholder { color: var(--muted); }
-.field:focus {
-  outline: none;
-  border-color: var(--blue);
-}
+.field:focus { outline: none; border-color: var(--lavender); }
 .btn {
-  border: 1px solid var(--blue-d);
+  border: 1px solid transparent;
   cursor: pointer;
   border-radius: var(--r);
   padding: 8px 16px;
   font-size: 14px;
-  font-weight: 500;
-  color: #fff;
-  background: var(--blue);
+  font-weight: 600;
+  color: #1a1330;
+  background: var(--lavender);
+  transition: background-color 0.15s;
 }
-.btn:hover { background: var(--blue-d); }
+.btn:hover { background: var(--lavender-h); }
 .btn:disabled { opacity: 0.5; cursor: default; }
+.btn-ghost {
+  border: 1px solid var(--border);
+  cursor: pointer;
+  border-radius: var(--r);
+  padding: 7px 14px;
+  font-size: 13px;
+  color: var(--ink-2);
+  background: transparent;
+}
+.btn-ghost:hover { background: var(--surface-2); color: var(--ink); }
+
+/* ---- badges + progress ---- */
+.badge {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid transparent;
+}
+.badge-high   { color: var(--red);  background: #2a1a24; border-color: #3d2430; }
+.badge-medium { color: var(--gold); background: #2a2519; border-color: #3d3520; }
+.badge-low    { color: var(--blue); background: #15233a; border-color: #1f3250; }
+.progress { height: 4px; border-radius: 999px; background: var(--border); overflow: hidden; }
+.progress > span { display: block; height: 100%; border-radius: 999px; background: var(--lavender-d); transition: width 0.3s; }
+
+/* ---- checkbox-like status marker ---- */
+.check {
+  display: inline-flex; height: 20px; width: 20px; flex: none;
+  align-items: center; justify-content: center;
+  border-radius: 5px; border: 1.5px solid var(--muted); color: transparent;
+}
+.check.done { background: var(--lavender); border-color: var(--lavender); color: #1a1330; }
