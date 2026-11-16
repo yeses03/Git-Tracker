@@ -19,7 +19,7 @@ export function CrescentLogo({ size = 28 }: { size?: number }) {
 export function MoonDisc({ phase, size = 64 }: { phase: MoonPhase; size?: number }) {
   const r = 30;
   const c = Math.cos(2 * Math.PI * phase.fraction); // 1 new … -1 full
-  const rx = Math.abs(c) * r;
+  const rx = Math.round(Math.abs(c) * r * 100) / 100; // rounded so server and client render identical markup
   const sweep = c > 0 ? 0 : 1; // crescent bulges toward the lit limb, gibbous away
   const lit = `M 32 ${32 - r} A ${r} ${r} 0 0 1 32 ${32 + r} A ${rx} ${r} 0 0 ${sweep} 32 ${32 - r} Z`;
   return (
