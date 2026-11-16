@@ -2,6 +2,8 @@ import { after } from "next/server";
 import { syncAllPlayers } from "@/lib/sync";
 import { getLeaderboard, getGraphData } from "@/lib/scores";
 import { isAdmin } from "@/lib/auth";
+import { moonPhase } from "@/lib/moon";
+import { istDateLabel, istGreeting, istToday, daysBetween } from "@/lib/time";
 import Dashboard from "@/components/Dashboard";
 
 // Per-request render (admin cookie + live scores).
@@ -21,12 +23,21 @@ export default async function Home() {
     isAdmin(),
   ]);
 
+  const { startDate, endDate } = leaderboard.contest;
+  const today = istToday();
+  // Days remaining after today: -1 = ended, 0 = last day, null = no end date.
+  const daysLeft = startDate && endDate ? (endDate < today ? -1 : daysBetween(today, endDate).length - 1) : null;
+
   return (
     <Dashboard
       contest={leaderboard.contest}
       players={leaderboard.players}
       graph={graph}
       isAdmin={admin}
+      greeting={istGreeting()}
+      dateLabel={istDateLabel()}
+      moon={moonPhase()}
+      daysLeft={daysLeft}
     />
   );
 }
