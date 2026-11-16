@@ -1,0 +1,25 @@
+# Render Blueprint — New → Blueprint → pick this repo. Render will ask you for the
+# variables marked `sync: false` (secrets are never stored in git).
+services:
+  - type: web
+    name: commit-arena
+    runtime: node
+    plan: free # free instances sleep after ~15 min idle; use "starter" to keep it always on
+    region: singapore # closest Render region to the Supabase DB (ap-northeast-1)
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true # redeploy on every push to the default branch
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: DATABASE_URL # pooled Supabase string (port 6543, ?pgbouncer=true)
+        sync: false
+      - key: DIRECT_URL # set to the same value as DATABASE_URL on Render (direct host is IPv6-only)
+        sync: false
+      - key: ENCRYPTION_KEY # 64 hex chars; reuse your local one to keep stored player tokens
+        sync: false
+      - key: ADMIN_PASSWORD # long and random — NOT dev-admin
+        sync: false
+      - key: NEXT_PUBLIC_SITE_URL # e.g. https://commit-arena.onrender.com
+        sync: false

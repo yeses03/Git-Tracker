@@ -106,17 +106,20 @@ Then open the **Admin** tab, sign in with `ADMIN_PASSWORD`, and:
 
 Anyone can view the **Stats** and **Graphs** tabs; only the admin can change anything.
 
-## Deploying to production (Vercel)
+## Deploying to production (Render)
 
-1. **Database** — create a Postgres DB (Supabase/Neon/Vercel Postgres). Run
-   `npx prisma db push` once, locally, with `DATABASE_URL`/`DIRECT_URL` pointed at it.
-2. **Import the repo** in Vercel and set these environment variables
-   (see `.env.example`): `DATABASE_URL` (pooled), `DIRECT_URL` (direct),
-   `ENCRYPTION_KEY` (**new** 64-hex key), `ADMIN_PASSWORD` (long & random),
-   `NEXT_PUBLIC_SITE_URL` (your domain).
-3. Deploy. Uptime checks can poll `/api/health`. `npm run build` runs `prisma generate` automatically.
-4. Open the site, sign in under **Admin**, set the contest, and re-add players
-   (tokens are encrypted with the key, so they don't carry over from a different one).
+1. **Database** — create a Postgres DB (Supabase/Neon). Run `npx prisma db push` once,
+   locally, with `DATABASE_URL`/`DIRECT_URL` pointed at it.
+2. **Render → New → Blueprint**, pick this repo. [`render.yaml`](render.yaml) configures the
+   service (build, start, health check `/api/health`) and prompts for the secrets:
+   `DATABASE_URL` (pooled), `DIRECT_URL` (use the same value as `DATABASE_URL` — Supabase's
+   direct host is IPv6-only), `ENCRYPTION_KEY`, `ADMIN_PASSWORD`, `NEXT_PUBLIC_SITE_URL`.
+3. Deploy. Every push to `main` redeploys automatically.
+4. Open the site, sign in under **Admin**, set the contest and add players. Reusing the same
+   database **and** `ENCRYPTION_KEY` keeps existing players; a new key means re-adding them.
+
+Note: the free plan sleeps after ~15 minutes idle (first visit then takes 30–60s).
+The app also runs on Vercel (set the same env vars; syncs are capped at 60s on the free tier).
 
 ## Security notes
 
