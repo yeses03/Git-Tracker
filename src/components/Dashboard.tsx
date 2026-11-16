@@ -76,7 +76,7 @@ export default function Dashboard({
               <div>
                 <p className="text-sm text-muted">{dateLabel}</p>
                 <h1 className="serif mt-3 text-[34px] font-semibold leading-tight text-ink sm:text-[40px]">
-                  {greeting}, challengers
+                  {greeting}
                 </h1>
                 <p className="mt-1.5 text-sm text-ink-2">Same sky, new progress. ✨</p>
               </div>
@@ -89,7 +89,7 @@ export default function Dashboard({
           </header>
 
           <main>
-            {tab === "overview" && <OverviewTab players={players} contest={contest} onNavigate={select} />}
+            {tab === "overview" && <OverviewTab players={players} onNavigate={select} />}
             {tab === "players" && <StatsTab players={players} />}
             {tab === "graphs" && <GraphsTab graph={graph} players={players} />}
             {tab === "admin" && <SetupTab contest={contest} players={players} isAdmin={isAdmin} />}

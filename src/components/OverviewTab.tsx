@@ -1,39 +1,13 @@
-import type { PlayerStats, ContestInfo } from "@/lib/scores";
-import { IconSun, IconCheck, IconUser } from "./Celestial";
+import type { PlayerStats } from "@/lib/scores";
+import { IconCheck, IconUser } from "./Celestial";
 
 const SHOWN = 5;
 
-/** Derives the briefing purely from the loaded data — never invents numbers. */
-function briefing(players: PlayerStats[], contest: ContestInfo): string {
-  if (!contest.startDate) return "No contest is running yet. Once an admin sets the dates, standings will appear here.";
-  if (players.length === 0) return "The contest is set, but no players have joined yet.";
-  const active = players.filter((p) => p.todayCommits > 0);
-  const todayTotal = players.reduce((s, p) => s + p.todayCommits, 0);
-  const leader = players[0];
-  const parts: string[] = [];
-  parts.push(
-    active.length === 0
-      ? "No commits have landed today yet."
-      : `${active.length} of ${players.length} player${players.length === 1 ? " has" : "s have"} committed today, ${todayTotal} commit${todayTotal === 1 ? "" : "s"} in all.`,
-  );
-  if (leader.competitionScore > 0) {
-    const second = players[1];
-    parts.push(
-      second && second.competitionScore === leader.competitionScore
-        ? `${leader.name} and ${second.name} are tied at ${leader.competitionScore}.`
-        : `${leader.name} leads with ${leader.competitionScore} contest commit${leader.competitionScore === 1 ? "" : "s"}.`,
-    );
-  }
-  return parts.join(" ");
-}
-
 export default function OverviewTab({
   players,
-  contest,
   onNavigate,
 }: {
   players: PlayerStats[];
-  contest: ContestInfo;
   onNavigate: (id: string) => void;
 }) {
   const todayRows = [...players].sort((a, b) => b.todayCommits - a.todayCommits || b.competitionScore - a.competitionScore);
@@ -41,14 +15,6 @@ export default function OverviewTab({
 
   return (
     <div className="space-y-9">
-      <section className="panel flex gap-3.5 p-5" aria-labelledby="briefing-h">
-        <IconSun className="mt-0.5 shrink-0 text-gold" />
-        <div>
-          <h2 id="briefing-h" className="text-sm font-semibold text-ink">Today&apos;s briefing</h2>
-          <p className="mt-1 text-sm leading-relaxed text-ink-2">{briefing(players, contest)}</p>
-        </div>
-      </section>
-
       <section aria-labelledby="today-h">
         <div className="mb-3 flex items-end justify-between">
           <h2 id="today-h" className="section-title">Today</h2>
